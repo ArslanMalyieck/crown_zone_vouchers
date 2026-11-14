@@ -62,7 +62,6 @@
    "fieldtype": "Select",
    "label": "Tax Rate",
    "options": "5\n0",
-   "default": "5",
    "in_list_view": 1,
    "columns": 1
   },
@@ -121,7 +120,7 @@
   }
  ],
  "links": [],
- "modified": "2026-11-14 16:41:48.424258",
+ "modified": "2026-11-14 19:33:29.624883",
  "modified_by": "Administrator",
  "module": "Crown Zone Vouchers",
  "name": "Voucher Service Line",

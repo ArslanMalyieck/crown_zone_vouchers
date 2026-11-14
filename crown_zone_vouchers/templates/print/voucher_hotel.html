@@ -1,6 +1,7 @@
 {% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
 {% include "crown_zone_vouchers/templates/print/_css.html" %}
-<div class="cz">
+{% set load = (doc.cz_travellers|length) + (doc.cz_hotel_stays|length) %}
+{{ m.frame_open(load) }}
 {{ m.header("HOTEL BOOKING VOUCHER", doc) }}
 
 {{ m.sec("GUEST INFORMATION") }}
@@ -36,5 +37,4 @@
 
 <div class="cz-keep">{{ m.sec("PREPARED & POSTED DETAILS") }}
 {{ m.prepared(doc) }}</div>
-{{ m.foot(doc, "HOTEL POLICIES & TERMS") }}
-</div>
+{{ m.frame_close(doc, "HOTEL POLICIES & TERMS") }}

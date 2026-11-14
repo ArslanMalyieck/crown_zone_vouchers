@@ -1,7 +1,8 @@
 {% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
 {% include "crown_zone_vouchers/templates/print/_css.html" %}
 {% set is_hajj = (pkg == "Hajj") %}
-<div class="cz">
+{% set load = (doc.cz_travellers|length) + (doc.cz_hotel_stays|length) %}
+{{ m.frame_open(load) }}
 {{ m.header(("HAJJ" if is_hajj else "UMRAH") ~ " PACKAGE VOUCHER", doc) }}
 <div class="cz-info">Customer confirmation: package, pilgrims, arrangements and terms - no financial amounts</div>
 
@@ -36,6 +37,7 @@
 {% for p in doc.cz_travellers %}
 <tr><td>{{ loop.index }}</td><td>{{ p.traveller_name or "" }}</td><td>{{ p.passport_no or "" }}</td><td>{{ p.nationality or "" }}</td><td>{{ cz_date(p.date_of_birth) }}</td><td>{{ p.room_no or "" }}</td></tr>
 {% endfor %}
+{{ m.pad([3 - (doc.cz_travellers|length), 0]|max, 6) }}
 </tbody></table>
 
 {% if doc.cz_inclusions or doc.cz_exclusions %}
@@ -45,5 +47,4 @@
 
 <div class="cz-keep">{{ m.sec("PREPARED & POSTED DETAILS") }}
 {{ m.prepared(doc) }}</div>
-{{ m.foot(doc, "TERMS & CONDITIONS / AUTHORIZATION") }}
-</div>
+{{ m.frame_close(doc, "TERMS & CONDITIONS / AUTHORIZATION") }}

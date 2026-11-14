@@ -62,3 +62,8 @@
 Invoice No.: <b>{{ doc.name }}</b><br>Date: {{ cz_date(doc.posting_date) }}</td>
 </tr></table>
 {% endmacro %}
+
+{% macro frame_open(load) %}<div class="cz {{ 'd3' if load > 22 else ('d2' if load > 13 else '') }}"><table class="czp"><tr><td class="czp-main">{% endmacro %}
+{% macro frame_close(doc, title="TERMS & CONDITIONS", inquiries=False) %}</td></tr><tr><td class="czp-foot">{{ foot(doc, title, inquiries) }}</td></tr></table></div>{% endmacro %}
+{% macro pad(n, cols) %}{% for i in range(n) %}<tr>{% for c in range(cols) %}<td>&nbsp;</td>{% endfor %}</tr>{% endfor %}{% endmacro %}
+{% macro inv_frame_close() %}</td></tr><tr><td class="czp-foot"><table class="cz-sign" style="margin-top:14px"><tr><td class="l" style="width:50%;height:42px;vertical-align:bottom">Customer Signature / Stamp</td><td class="l" style="vertical-align:bottom">For Crown Zone Tourism &amp; Travels Agency</td></tr></table>{{ wave() }}</td></tr></table></div>{% endmacro %}

@@ -121,9 +121,12 @@ def compute_children(doc):
         r.nights = max(date_diff(r.check_out, r.check_in), 0) if r.check_in and r.check_out else 0
         r.amount = flt(r.rooms or 1) * flt(r.nights) * flt(r.sale_rate) + flt(r.other_fees)
 
+    default_tax_rate = cint(frappe.db.get_value("Travel Service Type", doc.service_type,
+                                               "default_tax_rate") or 0)
     for r in doc.cz_service_lines:
         r.amount = flt(r.qty) * flt(r.rate)
-        tax_rate = cint(r.get("tax_rate") if r.get("tax_rate") not in (None, "") else 5)
+        tax_rate = cint(r.get("tax_rate") if r.get("tax_rate") not in (None, "") else default_tax_rate)
+        r.tax_rate = str(tax_rate)
         non_taxable = flt(r.get("non_taxable_price"))
         taxable = flt((flt(r.rate) - non_taxable) * 100 / (100 + tax_rate), 2) if (100 + tax_rate) else 0
         r.taxable_price = taxable
@@ -170,7 +173,7 @@ def sync_items(doc):
             if item_meta.has_field("final_price"):
                 row["final_price"] = flt(r.rate)
             if item_meta.has_field("tax_rate"):
-                row["tax_rate"] = cint(r.get("tax_rate") if r.get("tax_rate") not in (None, "") else 5)
+                row["tax_rate"] = cint(r.get("tax_rate") or 0)
             if item_meta.has_field("taxed_price"):
                 row["taxed_price"] = flt(r.get("taxable_price"))
             if item_meta.has_field("government_fee"):
@@ -311,11 +314,11 @@ def validate_for_post(doc):
 def rebuild_items(docname):
     """Rebuild Sales Order items from service lines (draft vouchers only)."""
     doc = frappe.get_doc("Sales Order", docname)
+    doc.check_permission("write")
     if doc.docstatus != 0:
         frappe.throw(_("Only draft vouchers can be rebuilt."))
     if not doc.get("service_type"):
         frappe.throw(_("This is not a travel voucher."))
     sync_items(doc)
-    doc.save(ignore_permissions=True)
-    frappe.db.commit()
+    doc.save()
     return doc.name

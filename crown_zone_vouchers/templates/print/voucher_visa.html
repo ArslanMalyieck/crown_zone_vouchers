@@ -1,6 +1,7 @@
 {% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
 {% include "crown_zone_vouchers/templates/print/_css.html" %}
-<div class="cz">
+{% set load = (doc.cz_travellers|length) + (((doc.cz_doc_checklist|length) / 2)|int) %}
+{{ m.frame_open(load) }}
 {{ m.header("VISA APPLICATION VOUCHER", doc) }}
 
 {{ m.sec("CUSTOMER INFORMATION") }}
@@ -15,6 +16,7 @@
 {% for p in doc.cz_travellers %}
 <tr><td>{{ loop.index }}</td><td>{{ p.traveller_name or "" }}</td><td>{{ p.passport_no or "" }}</td><td>{{ p.nationality or "" }}</td><td>{{ cz_date(p.date_of_birth) }}</td><td>{{ p.gender or "" }}</td><td>{{ p.relation or "" }}</td></tr>
 {% endfor %}
+{{ m.pad([3 - (doc.cz_travellers|length), 0]|max, 7) }}
 </tbody></table>
 
 {{ m.sec("VISA DETAILS") }}
@@ -38,5 +40,4 @@
 
 <div class="cz-keep">{{ m.sec("PREPARED & POSTED DETAILS") }}
 {{ m.prepared(doc) }}</div>
-{{ m.foot(doc, "TERMS & CONDITIONS", True) }}
-</div>
+{{ m.frame_close(doc, "TERMS & CONDITIONS", True) }}

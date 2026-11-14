@@ -160,15 +160,4 @@ frappe.ui.form.on("Sales Order", {
 		}
 	},
 	service_type(frm) { cz_apply_item_table_mode(frm); },
-	validate(frm) {
-		if (frm.doc.service_type) {
-			frm.clear_table("items");
-			frm.refresh_field("items");
-		}
-	},
-	after_save(frm) {
-		if (frm.doc.service_type) {
-			frm.reload_doc();
-		}
-	},
 });

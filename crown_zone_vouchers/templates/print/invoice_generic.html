@@ -1,7 +1,7 @@
 {% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
 {% include "crown_zone_vouchers/templates/print/_css.html" %}
 {% set v = cz_voucher(doc) %}
-<div class="cz">
+{{ m.frame_open(doc.items|length + 8) }}
 {{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc) }}
 <div class="cz-bill">BILL TO: {{ doc.customer_name }}{% if doc.tax_id %} &nbsp;|&nbsp; NTN/CNIC: {{ doc.tax_id }}{% endif %} &nbsp;|&nbsp; Voucher Ref: {{ doc.cz_travel_voucher or "" }} &nbsp;|&nbsp; Currency: PKR</div>
 
@@ -19,9 +19,9 @@
 {% for i in doc.items %}
 <tr><td>{{ (i.description or i.item_name) | striptags }}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r">{{ cz_money(i.rate) }}</td><td class="r">{{ cz_money(i.amount) }}</td></tr>
 {% endfor %}
+{{ m.pad([10 - (doc.items|length), 0]|max, 4) }}
 </tbody></table>
 
 {% set total_label = "Subtotal (PKR)" %}{% set grand_label = "GRAND TOTAL (PKR)" %}
 {% include "crown_zone_vouchers/templates/print/_inv_totals.html" %}
-{{ m.wave() }}
-</div>
+{{ m.inv_frame_close() }}
