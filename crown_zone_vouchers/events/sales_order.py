@@ -301,3 +301,17 @@ def validate_for_post(doc):
 
     if e:
         frappe.throw("<br>".join(e), title=_("Cannot Post Voucher"))
+
+
+@frappe.whitelist()
+def rebuild_items(docname):
+    """Rebuild Sales Order items from service lines (draft vouchers only)."""
+    doc = frappe.get_doc("Sales Order", docname)
+    if doc.docstatus != 0:
+        frappe.throw(_("Only draft vouchers can be rebuilt."))
+    if not doc.get("service_type"):
+        frappe.throw(_("This is not a travel voucher."))
+    sync_items(doc)
+    doc.save(ignore_permissions=True)
+    frappe.db.commit()
+    return doc.name

@@ -134,3 +134,35 @@ frappe.ui.form.on("Voucher Air Tax", {
 	amount(frm) { cz_recalc_tickets(frm); },
 	ticket_row_no(frm) { cz_recalc_tickets(frm); },
 });
+
+
+// ---- voucher item table: auto-built from service lines
+function cz_apply_item_table_mode(frm) {
+	if (!frm.fields_dict || !frm.fields_dict.items) return;
+	const is_voucher = !!frm.doc.service_type;
+	frm.set_df_property("items", "read_only", is_voucher ? 1 : 0);
+	frm.set_df_property("items", "reqd", is_voucher ? 0 : 1);
+}
+
+frappe.ui.form.on("Sales Order", {
+	refresh(frm) {
+		cz_apply_item_table_mode(frm);
+		if (frm.doc.service_type && !frm.is_new()) {
+			frm.add_custom_button(__("Rebuild Items"), function () {
+				frappe.call({
+					method: "crown_zone_vouchers.events.sales_order.rebuild_items",
+					args: { docname: frm.doc.name },
+					freeze: true,
+					freeze_message: __("Rebuilding items..."),
+					callback: function () { frm.reload_doc(); },
+				});
+			}, __("Actions"));
+		}
+	},
+	service_type(frm) { cz_apply_item_table_mode(frm); },
+	after_save(frm) {
+		if (frm.doc.service_type) {
+			frm.reload_doc();
+		}
+	},
+});
