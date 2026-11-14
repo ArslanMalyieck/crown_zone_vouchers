@@ -167,8 +167,13 @@ def sync_items(doc):
         info = cache[code]
         r.update(item_name=info.item_name, uom=info.stock_uom, stock_uom=info.stock_uom,
                  conversion_factor=1, delivery_date=doc.delivery_date)
-        if frappe.get_meta("Sales Order Item").has_field("custom_item_code"):
+        item_meta = frappe.get_meta("Sales Order Item")
+        if item_meta.has_field("custom_item_code"):
             r["custom_item_code"] = code
+        if doc.get("cz_supplier") and item_meta.has_field("supplier"):
+            r["supplier"] = doc.cz_supplier
+        if len(rows) == 1 and item_meta.has_field("purchase_price"):
+            r["purchase_price"] = flt(doc.get("cz_purchase_amount_pkr"))
         doc.append("items", r)
 
 
