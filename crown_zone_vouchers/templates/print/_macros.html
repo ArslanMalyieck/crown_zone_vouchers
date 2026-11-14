@@ -4,7 +4,7 @@
 <table class="cz-hdr"><tr>
 <td class="cz-logo">{% if b.logo %}<img src="{{ b.logo }}">{% endif %}</td>
 <td><div class="cz-name">{{ b.name }}</div><div class="cz-tag">{{ b.tagline }}</div></td>
-<td class="cz-contact">{{ b.address }}<br>PTCL: {{ b.ptcl }}<br>Mob: {{ b.mobile }}<br>{{ b.email }}{% if b.website %} | {{ b.website }}{% endif %}</td>
+<td class="cz-contact">{{ b.address }}<br>PTCL: {{ b.ptcl }}<br>Mob: {{ b.mobile }}<br>{{ b.email }}</td>
 </tr></table>
 <table class="cz-titlebar"><tr>
 <td class="t">{{ title }}</td>
@@ -46,7 +46,7 @@
 <table style="margin-top:8px"><tr>
 <td style="width:98px;vertical-align:top"><div class="cz-qrbox"><img src="{{ cz_qr('CZ|' ~ doc.name ~ '|' ~ (doc.cz_posted_on or '')) }}"><br>{{ doc.name }}</div></td>
 <td style="vertical-align:top;padding-left:6px"><div class="cz-terms"><div class="h">{{ title }}</div><ol>{% for t in terms %}<li>{{ t }}</li>{% endfor %}</ol></div></td>
-{% if inquiries %}<td class="cz-inq"><b>For Inquiries:</b><br>{{ b.mobile }}<br>{{ b.email }}<br>{{ b.website }}</td>{% endif %}
+{% if inquiries %}<td class="cz-inq"><b>For Inquiries:</b><br>{{ b.mobile }}<br>{{ b.email }}</td>{% endif %}
 </tr></table>
 {{ wave() }}
 {% endmacro %}
@@ -57,7 +57,7 @@
 <table class="cz-hdr"><tr>
 <td class="cz-logo">{% if b.logo %}<img src="{{ b.logo }}">{% endif %}</td>
 <td><div class="cz-name">{{ b.name }}</div>
-<div class="cz-tag">{{ b.address | replace("<br>", ", ") }}<br>PTCL: {{ b.ptcl }} | Mobile: {{ b.mobile }}{% if b.srb %} | SRB: {{ b.srb }}{% endif %}</div></td>
+<div class="cz-tag">{{ b.address | replace("<br>", ", ") }}<br>PTCL: {{ b.ptcl }} | Mobile: {{ b.mobile }} | Email: {{ b.email }}{% if b.srb %} | SRB: {{ b.srb }}{% endif %}</div></td>
 <td class="cz-contact" style="text-align:right;border-left:0"><div style="font-size:13pt;font-weight:bold;color:#0B2A55">{{ title }}</div>
 Invoice No.: <b>{{ doc.name }}</b><br>Date: {{ cz_date(doc.posting_date) }}</td>
 </tr></table>

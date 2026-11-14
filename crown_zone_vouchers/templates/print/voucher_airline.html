@@ -35,7 +35,7 @@
 {{ m.sec("ADDITIONAL INFORMATION") }}
 {{ m.kv([
  ("Booking Date", cz_date(doc.cz_booking_date)), ("Issue Date", cz_date(tickets[0].ticket_date) if tickets else ""),
- ("Supplier / GDS", (tickets[0].gds if tickets and tickets[0].gds else doc.cz_supplier)), ("Remarks", doc.cz_customer_remarks)
+ ("Remarks", doc.cz_customer_remarks)
 ]) }}
 
 {{ m.sec("PREPARED & POSTED DETAILS") }}

@@ -85,7 +85,7 @@ BRAND_DEFAULTS = {
     "address": "31, Hussani Housing Society,\nMain University Road, Karachi, 75300",
     "ptcl": "0092-21-33516247",
     "mobile": "0092-335-2226182",
-    "email": "info@crownzone.com",
-    "website": "www.crownzone.com",
+    "email": "crownzone@zonetourism.ae",
+    "website": "",
     "srb_no": "S9687169-1",
 }
