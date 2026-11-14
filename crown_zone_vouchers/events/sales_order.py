@@ -44,7 +44,6 @@ def before_validate(doc, method=None):
         for row in list(doc.get("items") or []):
             if not (row.get("item_code") or row.get("custom_item_code")):
                 doc.remove(row)
-    if not doc.get("items"):
         sync_items(doc)
 
 
