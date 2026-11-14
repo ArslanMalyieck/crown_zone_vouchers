@@ -40,6 +40,10 @@ def before_validate(doc, method=None):
         doc.cz_prepared_on = now_datetime()
     add_default_documents(doc)
     compute_children(doc)
+    if doc.get("service_type"):
+        for row in list(doc.get("items") or []):
+            if not (row.get("item_code") or row.get("custom_item_code")):
+                doc.remove(row)
     if not doc.get("items"):
         sync_items(doc)
 
