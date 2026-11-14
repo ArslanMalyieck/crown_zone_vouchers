@@ -120,12 +120,18 @@ def compute_children(doc):
     for r in doc.cz_service_lines:
         r.amount = flt(r.qty) * flt(r.rate)
 
+    line_purchase_total = sum(flt(r.get("purchase_amount")) for r in doc.cz_service_lines)
     doc.cz_purchase_amount_pkr = flt(doc.cz_purchase_amount) * rate
+    if line_purchase_total:
+        doc.cz_purchase_amount_pkr = line_purchase_total
+        if not doc.cz_purchase_currency or doc.cz_purchase_currency == "PKR":
+            doc.cz_purchase_amount = line_purchase_total
 
 
 def sync_items(doc):
     """Sales Order items are built from the service tabs; Sales never edits them by hand."""
     st = doc.service_type
+    item_meta = frappe.get_meta("Sales Order Item")
     rows = []
     default_item = frappe.db.get_value("Travel Service Type", st, "default_item")
 
@@ -149,9 +155,24 @@ def sync_items(doc):
                 cz_rooms=r.rooms, cz_nights=r.nights, cz_unit_rate=r.sale_rate, cz_other_fees=r.other_fees))
     elif st in ("Visa", "Transport", "Umrah", "Hajj", "Tour") and doc.cz_service_lines:
         for r in doc.cz_service_lines:
-            rows.append(dict(
+            row = dict(
                 item_code=r.item_code or default_item, qty=flt(r.qty) or 1, rate=flt(r.rate),
-                description=" - ".join([x for x in (r.category, r.description) if x]) or st))
+                description=" - ".join([x for x in (r.category, r.description) if x]) or st)
+            if item_meta.has_field("final_price"):
+                row["final_price"] = flt(r.rate)
+            if item_meta.has_field("taxed_price"):
+                row["taxed_price"] = flt(r.get("taxable_price"))
+            if item_meta.has_field("government_fee"):
+                row["government_fee"] = flt(r.get("non_taxable_price"))
+            if item_meta.has_field("vat"):
+                row["vat"] = flt(r.get("vat"))
+            if item_meta.has_field("purchase_price"):
+                row["purchase_price"] = flt(r.get("purchase_amount"))
+            if item_meta.has_field("ticket_no"):
+                row["ticket_no"] = r.get("ticket_no")
+            if item_meta.has_field("cz_ticket_no"):
+                row["cz_ticket_no"] = r.get("ticket_no")
+            rows.append(row)
 
     if not rows:
         return
@@ -167,12 +188,12 @@ def sync_items(doc):
         info = cache[code]
         r.update(item_name=info.item_name, uom=info.stock_uom, stock_uom=info.stock_uom,
                  conversion_factor=1, delivery_date=doc.delivery_date)
-        item_meta = frappe.get_meta("Sales Order Item")
         if item_meta.has_field("custom_item_code"):
             r["custom_item_code"] = code
         if doc.get("cz_supplier") and item_meta.has_field("supplier"):
             r["supplier"] = doc.cz_supplier
-        if len(rows) == 1 and item_meta.has_field("purchase_price"):
+        if (len(rows) == 1 and item_meta.has_field("purchase_price")
+                and "purchase_price" not in r):
             r["purchase_price"] = flt(doc.get("cz_purchase_amount_pkr"))
         doc.append("items", r)
 

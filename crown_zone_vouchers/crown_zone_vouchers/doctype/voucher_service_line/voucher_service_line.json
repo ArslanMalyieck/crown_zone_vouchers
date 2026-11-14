@@ -9,6 +9,11 @@
   "item_code",
   "qty",
   "rate",
+  "taxable_price",
+  "non_taxable_price",
+  "vat",
+  "purchase_amount",
+  "ticket_no",
   "amount"
  ],
  "fields": [
@@ -31,7 +36,9 @@
    "fieldname": "item_code",
    "fieldtype": "Link",
    "label": "Item (optional)",
-   "options": "Item"
+   "options": "Item",
+   "in_list_view": 1,
+   "columns": 1
   },
   {
    "fieldname": "qty",
@@ -49,6 +56,41 @@
    "columns": 2
   },
   {
+   "fieldname": "taxable_price",
+   "fieldtype": "Currency",
+   "label": "Taxable (per unit)",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "non_taxable_price",
+   "fieldtype": "Currency",
+   "label": "Non Taxable (per unit)",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "vat",
+   "fieldtype": "Currency",
+   "label": "VAT (per unit)",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "purchase_amount",
+   "fieldtype": "Currency",
+   "label": "Purchase Amount (PKR)",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "ticket_no",
+   "fieldtype": "Data",
+   "label": "Ticket No.",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
    "fieldname": "amount",
    "fieldtype": "Currency",
    "label": "Amount (PKR)",
@@ -58,7 +100,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-29 10:00:00.000000",
+ "modified": "2026-11-14 16:26:39.234010",
  "modified_by": "Administrator",
  "module": "Crown Zone Vouchers",
  "name": "Voucher Service Line",

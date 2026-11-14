@@ -53,8 +53,17 @@
 </tr></table>
 
 <div class="czt-guest">
+<table><tr>
+<td style="width:65%;vertical-align:top">
 <div class="czt-lb">GUEST NAME</div>
 <div class="n">{{ doc.cz_lead_guest or doc.contact_display or doc.customer_name }}</div>
+</td>
+<td style="width:35%;text-align:right;vertical-align:top">
+{% set ticket_nos = doc.items | selectattr('ticket_no') | map(attribute='ticket_no') | join(', ') %}
+<div class="czt-lb">TICKET NO.</div>
+<div class="czt-vl">{{ ticket_nos }}</div>
+</td>
+</tr></table>
 <table><tr>
 <td style="width:33%">ADULTS <b>{{ "%02d"|format(adults|int) }}</b></td>
 <td style="width:33%">CHILDREN <b>{{ "%02d"|format(children|int) }}</b></td>
