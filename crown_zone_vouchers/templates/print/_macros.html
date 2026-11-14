@@ -43,7 +43,7 @@
 {% macro foot(doc, title="TERMS & CONDITIONS", inquiries=False) %}
 {% set terms = cz_terms(doc.service_type) %}
 {% set b = cz_brand() %}
-<table style="margin-top:8px"><tr>
+<table class="cz-foot" style="margin-top:4px"><tr>
 <td style="width:98px;vertical-align:top"><div class="cz-qrbox"><img src="{{ cz_qr('CZ|' ~ doc.name ~ '|' ~ (doc.cz_posted_on or '')) }}"><br>{{ doc.name }}</div></td>
 <td style="vertical-align:top;padding-left:6px"><div class="cz-terms"><div class="h">{{ title }}</div><ol>{% for t in terms %}<li>{{ t }}</li>{% endfor %}</ol></div></td>
 {% if inquiries %}<td class="cz-inq"><b>For Inquiries:</b><br>{{ b.mobile }}<br>{{ b.email }}</td>{% endif %}
