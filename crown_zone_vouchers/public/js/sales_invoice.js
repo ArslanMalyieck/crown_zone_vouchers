@@ -1,6 +1,18 @@
 // Crown Zone Vouchers - Sales Invoice (manual invoice by Accounts)
 frappe.ui.form.on("Sales Invoice", {
 	refresh(frm) {
+		if (frm.is_new() && !frm.doc.cz_travel_voucher) {
+			const so = (frm.doc.items || []).map((i) => i.sales_order).find((x) => x);
+			if (so) frm.set_value("cz_travel_voucher", so);
+		}
+		// invoices mapped from a voucher inherit the voucher's tax rows: Without Tax must start clean
+		if (frm.is_new() && frm.doc.cz_travel_voucher && frm.doc.cz_invoice_tax_type === "Without Tax"
+			&& (frm.doc.taxes || []).length) {
+			frm.set_value("taxes_and_charges", "");
+			frm.clear_table("taxes");
+			frm.refresh_field("taxes");
+			frm.trigger("calculate_taxes_and_totals");
+		}
 		cz_si_columns(frm);
 	},
 	cz_travel_voucher(frm) {

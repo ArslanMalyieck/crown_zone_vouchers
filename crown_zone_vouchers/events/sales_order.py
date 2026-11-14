@@ -4,11 +4,17 @@ from frappe.utils import cint, date_diff, flt, getdate, now_datetime, nowdate
 
 from crown_zone_vouchers.utils import cz_sector
 
-DEFAULT_PREFIX = {"Airline": "ATV", "Hotel": "HTV", "Visa": "VSV", "Transport": "TRN", "Umrah": "UMH", "Hajj": "HAJ"}
+DEFAULT_PREFIX = {"Airline": "ATV", "Hotel": "HTV", "Visa": "VSV", "Transport": "TRN", "Umrah": "UMH", "Hajj": "HAJ",
+                  "Tour": "CZ-ACT"}
 TRAVEL_ROLES = ("Travel Manager", "System Manager")
 
 
 def voucher_series(service_type):
+    custom = frappe.db.get_value("Travel Service Type", service_type, "voucher_series")
+    if custom:
+        return custom
+    if service_type == "Tour":
+        return "CZ-ACT-.YYYY.-.####"
     prefix = frappe.db.get_value("Travel Service Type", service_type, "voucher_prefix") or DEFAULT_PREFIX.get(service_type)
     return "%s-.YYYY.-.#####" % prefix
 
@@ -141,7 +147,7 @@ def sync_items(doc):
                 description="%s - %s x%s room(s), %s night(s)" % (name or "", r.room_type or "", r.rooms or 1, r.nights or 0),
                 cz_hotel_city=city, cz_room_type=r.room_type, cz_lead_guest=doc.cz_lead_guest,
                 cz_rooms=r.rooms, cz_nights=r.nights, cz_unit_rate=r.sale_rate, cz_other_fees=r.other_fees))
-    elif st in ("Visa", "Transport", "Umrah", "Hajj") and doc.cz_service_lines:
+    elif st in ("Visa", "Transport", "Umrah", "Hajj", "Tour") and doc.cz_service_lines:
         for r in doc.cz_service_lines:
             rows.append(dict(
                 item_code=r.item_code or default_item, qty=flt(r.qty) or 1, rate=flt(r.rate),
@@ -229,6 +235,18 @@ def validate_for_post(doc):
                 add(_("Trip row {0}: Pickup date/time, Pickup and Drop-off location are required.").format(t.idx))
         if not doc.cz_service_lines:
             add(_("Add at least one service line."))
+
+    elif st == "Tour":
+        if not doc.cz_lead_guest:
+            add(_("Guest Name (Lead Guest) is required."))
+        if cint(doc.cz_total_adults) < 1:
+            add(_("Total Adults must be at least 1."))
+        for fn, lb in (("cz_tour_name", "Tour / Activity"), ("cz_tour_date", "Tour Date"),
+                       ("cz_pickup_location", "Pickup Location"), ("cz_pickup_time", "Pickup Time")):
+            if not doc.get(fn):
+                add(_("{0} is required.").format(lb))
+        if not doc.cz_service_lines:
+            add(_("Add the tour price in Services & Documents."))
 
     elif st in ("Umrah", "Hajj"):
         if not doc.cz_package_name:

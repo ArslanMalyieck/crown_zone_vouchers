@@ -74,9 +74,9 @@ def sales_order_fields():
     b.add("cz_lead_guest", "Passenger / Lead Guest / Lead Pilgrim")
     b.add("cz_contact_whatsapp", "Contact / WhatsApp")
     b.add("cz_nationality", "Nationality")
-    b.add("cz_total_adults", "Total Adults", "Int", depends_on=svc("Hotel", "Umrah", "Hajj"))
-    b.add("cz_total_children", "Total Children", "Int", depends_on=svc("Hotel", "Umrah", "Hajj"))
-    b.add("cz_children_ages", "Children Ages", depends_on=svc("Hotel", "Umrah", "Hajj"))
+    b.add("cz_total_adults", "Total Adults", "Int", depends_on=svc("Hotel", "Umrah", "Hajj", "Tour"))
+    b.add("cz_total_children", "Total Children", "Int", depends_on=svc("Hotel", "Umrah", "Hajj", "Tour"))
+    b.add("cz_children_ages", "Children Ages", depends_on=svc("Hotel", "Umrah", "Hajj", "Tour"))
     b.add("cz_customer_remarks", "Remarks (printed on voucher)", "Small Text")
 
     # hotel
@@ -109,6 +109,18 @@ def sales_order_fields():
     # transport
     b.sec("Transport Details", svc("Transport"))
     b.add("cz_transport_service", "Service Type", description="Airport transfer / Full day / Intercity ...")
+
+    # tour / activity (desert safari, city tour ...)
+    b.sec("Tour Details", svc("Tour"))
+    b.add("cz_voucher_title", "Voucher Title (printed)", description="e.g. Desert Safari -> prints DESERT SAFARI VOUCHER")
+    b.add("cz_tour_name", "Tour / Activity", description="e.g. Desert Safari - Sharing (Land Cruiser)")
+    b.add("cz_tour_date", "Tour Date", "Date")
+    b.col()
+    b.add("cz_pickup_location", "Pickup Location")
+    b.add("cz_pickup_time", "Pickup Time", "Time")
+    b.add("cz_dropoff_location", "Drop-off Location (optional)")
+    b.add("cz_important_note", "Important Note (printed)", "Small Text",
+          default="Please be ready at the pickup point 15 minutes before pickup.")
 
     # umrah / hajj package
     b.sec("Package Details", svc("Umrah", "Hajj"))
@@ -153,7 +165,7 @@ def sales_order_fields():
     b.add("cz_trips", "Trips", "Table", "Voucher Transport Trip")
 
     # ---------------- 7. SERVICES & DOCUMENTS ----------------
-    b.tab("cz_service_tab", "Services & Documents", svc("Visa", "Transport", "Umrah", "Hajj"))
+    b.tab("cz_service_tab", "Services & Documents", svc("Visa", "Transport", "Umrah", "Hajj", "Tour"))
     b.sec("Services / Charges (customer sale, PKR)")
     b.add("cz_service_lines", "Services", "Table", "Voucher Service Line")
     b.sec("Document Checklist", svc("Visa", "Umrah", "Hajj"))
@@ -191,7 +203,7 @@ def sales_order_fields():
     return top.fields + b.fields
 
 
-ALL = ("Airline", "Hotel", "Visa", "Transport", "Umrah", "Hajj")
+ALL = ("Airline", "Hotel", "Visa", "Transport", "Umrah", "Hajj", "Tour")
 
 
 def item_fields():
@@ -219,7 +231,7 @@ def sales_invoice_fields():
     b.add("cz_service_type", "Service Type", "Link", "Travel Service Type", read_only=1, no_copy=1,
           in_standard_filter=1)
     b.add("cz_invoice_tax_type", "Invoice Type", "Select", "Without Tax\nWith Tax", default="Without Tax",
-          depends_on="eval:doc.cz_travel_voucher", bold=1)
+          bold=1, description="Without Tax = no tax rows allowed; With Tax = tax rows required")
     b.add("cz_correction_reason", "Correction Reason (credit / debit note)", "Small Text",
           depends_on="eval:doc.is_return || doc.is_debit_note")
     return b.fields

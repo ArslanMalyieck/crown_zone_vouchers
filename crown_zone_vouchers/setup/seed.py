@@ -6,9 +6,14 @@ SERVICES = [
     ("Transport", "TRN", "INV-TRN", "Transport Service"),
     ("Umrah", "UMH", "INV-UMH", "Umrah Package"),
     ("Hajj", "HAJ", "INV-HAJ", "Hajj Package"),
+    ("Tour", "CZ-ACT", "INV-TUR", "Tour Service"),
 ]
 
+# optional full naming-series override per service (default is PREFIX-.YYYY.-.#####)
+VOUCHER_SERIES = {"Tour": "CZ-ACT-.YYYY.-.####"}
+
 TERMS = {
+    "Tour": [],
     "Airline": [
         "This ticket is issued subject to the airline's rules and regulations.",
         "Airline tickets are non-refundable.",

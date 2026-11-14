@@ -65,6 +65,19 @@ def cz_date(d):
     return getdate(d).strftime("%d-%b-%Y") if d else ""
 
 
+def cz_datefmt(d, fmt="%d %b %Y"):
+    return getdate(d).strftime(fmt) if d else ""
+
+
+def cz_time12(t):
+    hhmm = cz_time(t)
+    if not hhmm:
+        return ""
+    h, m = hhmm.split(":")
+    h = int(h)
+    return "%02d:%s %s" % ((h % 12) or 12, m, "AM" if h < 12 else "PM")
+
+
 def cz_datetime(d):
     return get_datetime(d).strftime("%d-%b-%Y %I:%M %p") if d else ""
 

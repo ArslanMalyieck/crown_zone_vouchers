@@ -1,0 +1,85 @@
+{% set b = cz_brand() %}
+{% set adults = doc.cz_total_adults or 0 %}
+{% set children = doc.cz_total_children or 0 %}
+{% set title = ((doc.cz_voucher_title or doc.cz_tour_name or "Tour") | upper) ~ " VOUCHER" %}
+<style>
+.czt{font-family:Arial,Helvetica,sans-serif;color:#112F57;font-size:10pt}
+.czt table{width:100%;border-collapse:collapse}
+.czt-top{height:12px;background:#112F57}
+.czt-name{font-size:19pt;font-weight:bold;color:#112F57;line-height:1.15}
+.czt-sub{font-size:12pt;font-weight:bold;color:#112F57;margin-top:2px}
+.czt-tag{font-size:11pt;font-style:italic;color:#C89B35;margin-top:3px}
+.czt-gold{border-top:2px solid #C89B35;margin:12px 0 14px 0}
+.czt-bar{background:#112F57;border-radius:9px;color:#fff}
+.czt-bar td{padding:15px 16px}
+.czt-bar .t{font-size:19pt;font-weight:bold;letter-spacing:.3px}
+.czt-chip{background:#C89B35;color:#112F57;font-weight:bold;font-size:11pt;border-radius:7px;padding:10px 0;text-align:center;width:150px}
+.czt-lb{font-size:10pt;color:#5A6781}
+.czt-vl{font-size:12.5pt;font-weight:bold;color:#112F57;margin-top:6px}
+.czt-guest{background:#EFF3F9;border-radius:10px;padding:14px 18px;margin-top:14px}
+.czt-guest .n{font-size:17pt;font-weight:bold;color:#112F57;margin:6px 0 8px 0}
+.czt-guest td{font-size:10.5pt;color:#5A6781}
+.czt-guest td b{font-size:13pt;color:#112F57;margin-left:12px}
+.czt-h{font-size:14pt;font-weight:bold;color:#112F57;margin:20px 0 0 0;padding-bottom:7px;border-bottom:2px solid #C89B35}
+.czt-rows td{padding:12px 4px;border-bottom:2px solid #E3E8F2;font-size:11pt}
+.czt-rows td.l{width:24%;color:#5A6781;font-size:10.5pt;text-transform:uppercase}
+.czt-rows td.v{font-weight:bold;color:#112F57;font-size:12pt}
+.czt-qr{border:2px solid #C89B35;border-radius:10px;width:112px;height:112px;text-align:center;vertical-align:middle}
+.czt-qr img{width:92px;height:92px}
+.czt-note{background:#FDF5DF;border-radius:10px;padding:14px 20px}
+.czt-note .h{font-size:11pt;font-weight:bold;color:#112F57;margin-bottom:5px}
+.czt-note .p{font-size:10pt;color:#112F57}
+.czt-foot{background:#112F57;color:#fff;text-align:center;padding:20px 12px;margin-top:20px}
+.czt-foot .a{font-size:12.5pt;font-weight:bold}
+.czt-foot .d{font-size:10pt;margin-top:8px}
+.czt-foot .g{font-size:11pt;font-style:italic;color:#C89B35;margin-top:12px}
+</style>
+<div class="czt">
+<div class="czt-top"></div>
+<table style="margin-top:14px"><tr>
+<td style="width:150px">{% if b.logo %}<img src="{{ b.logo }}" style="max-width:130px;max-height:130px">{% endif %}</td>
+<td><div class="czt-name">CROWN ZONE TOURISM</div><div class="czt-sub">&amp; TRAVELS AGENCY</div><div class="czt-tag">{{ b.tagline }}</div></td>
+</tr></table>
+<div class="czt-gold"></div>
+
+<table class="czt-bar"><tr>
+<td class="t">{{ title }}</td>
+<td style="width:170px;padding-right:16px"><div class="czt-chip">{{ ((doc.cz_booking_status or "Pending") | upper) }}</div></td>
+</tr></table>
+
+<table style="margin-top:16px"><tr>
+<td style="width:50%;padding-left:6px"><div class="czt-lb">Voucher No.</div><div class="czt-vl">{{ doc.name }}</div></td>
+<td style="padding-left:6px"><div class="czt-lb">Booking Date</div><div class="czt-vl">{{ cz_datefmt(doc.cz_booking_date or doc.transaction_date, "%d %b %Y") }}</div></td>
+</tr></table>
+
+<div class="czt-guest">
+<div class="czt-lb">GUEST NAME</div>
+<div class="n">{{ doc.cz_lead_guest or doc.contact_display or doc.customer_name }}</div>
+<table><tr>
+<td style="width:33%">ADULTS <b>{{ "%02d"|format(adults|int) }}</b></td>
+<td style="width:33%">CHILDREN <b>{{ "%02d"|format(children|int) }}</b></td>
+<td>TOTAL <b>{{ "%02d"|format((adults + children)|int) }}</b></td>
+</tr></table>
+</div>
+
+<div class="czt-h">ACTIVITY DETAILS</div>
+<table class="czt-rows">
+<tr><td class="l">Tour</td><td class="v">{{ doc.cz_tour_name or "" }}</td></tr>
+<tr><td class="l">Tour Date</td><td class="v">{{ cz_datefmt(doc.cz_tour_date, "%d %B %Y") }}</td></tr>
+<tr><td class="l">Pickup</td><td class="v">{{ doc.cz_pickup_location or "" }}</td></tr>
+<tr><td class="l">Pickup Time</td><td class="v">{{ cz_time12(doc.cz_pickup_time) }}</td></tr>
+{% if doc.cz_dropoff_location %}<tr><td class="l">Drop-off</td><td class="v">{{ doc.cz_dropoff_location }}</td></tr>{% endif %}
+</table>
+
+<table style="margin-top:14px"><tr>
+<td style="width:124px;vertical-align:middle"><table class="czt-qr"><tr><td><img src="{{ cz_qr('CZ|' ~ doc.name ~ '|' ~ (doc.cz_posted_on or '')) }}"></td></tr></table></td>
+<td style="vertical-align:middle"><div class="czt-note"><div class="h">IMPORTANT NOTE</div><div class="p">{{ doc.cz_important_note or "Please be ready at the pickup point 15 minutes before pickup." }}</div></div></td>
+</tr></table>
+
+<div class="czt-foot">
+<div class="a">CROWN ZONE TOURISM &amp; TRAVELS AGENCY</div>
+<div class="d">{{ b.address | replace("<br>", " ") }}</div>
+<div class="d">PTCL: {{ b.ptcl }} &nbsp;|&nbsp; Mobile: {{ b.mobile }}</div>
+<div class="g">Thank you for choosing Crown Zone Tourism</div>
+</div>
+</div>

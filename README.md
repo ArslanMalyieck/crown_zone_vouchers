@@ -1,7 +1,7 @@
 # Crown Zone Vouchers (Frappe / ERPNext v15-v16)
 
 Travel sales vouchers for Crown Zone Tourism & Travels Agency (Karachi, PKR):
-Airline, Hotel, Visa, Transport, Umrah, Hajj.
+Airline, Hotel, Visa, Transport, Umrah, Hajj, **Tour** (desert safari / city tour / activities; voucher no. CZ-ACT-YYYY-0001).
 
 **Voucher = Sales Order** (Draft -> Submit = *Posted*).
 **Invoice = Sales Invoice**, prepared manually by Accounts from the posted voucher (no auto invoice).
@@ -30,8 +30,8 @@ Errors in any setup step are written to Error Log ("Crown Zone Vouchers setup: .
 * Roles: Travel Sales (create/edit/post vouchers, no invoice access), Travel Accounts (read vouchers incl. cost/profit,
   create invoices, hold/release), Travel Manager (cancel, credit/debit notes).
 * Voucher numbers ATV/HTV/VSV/TRN/UMH/HAJ-YYYY-00001; invoice numbers INV-AIR/HTL/VISA/TRN/UMH/HAJ-YYYY-00001.
-* Print formats (20): 6 customer vouchers (no amounts, QR, terms, Prepared/Posted By), 12 invoices
-  (Airline, Hotel, Visa, Transport, Umrah, Hajj x Without/With Tax) + dispatchers **CZ Voucher** and **CZ Invoice**
+* Print formats (23): 7 customer vouchers (incl. CZ Tour Voucher) (no amounts, QR, terms, Prepared/Posted By), 14 invoices
+  (Airline, Hotel, Visa, Transport, Umrah, Hajj, Tour x Without/With Tax) + dispatchers **CZ Voucher** and **CZ Invoice**
   (set as default print formats; pick the right layout automatically).
 * Report "Posted Voucher Queue" + workspace "Travel Vouchers" (Invoice Pending / On Hold cards).
 
@@ -56,6 +56,6 @@ Errors in any setup step are written to Error Log ("Crown Zone Vouchers setup: .
 * Airline supplier net = fare + airline taxes - commission + WHT-on-commission (formula in events/sales_order.py).
 * Visa sample invoice was in AED in the PDF; the app is PKR-only per the design rules.
 * Voucher series options are added to the naming_series Select of Sales Order / Sales Invoice.
-* Service Type names (Airline, Hotel, Visa, Transport, Umrah, Hajj) are used in code - do not rename.
+* Service Type names (Airline, Hotel, Visa, Transport, Umrah, Hajj, Tour) are used in code - do not rename.
 * Service Type is mandatory on Sales Order (site is dedicated to travel). Remove `reqd` in
   setup/custom_fields.py if normal sales orders are also needed.

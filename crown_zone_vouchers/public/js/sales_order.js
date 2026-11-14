@@ -98,6 +98,8 @@ frappe.ui.form.on("Sales Order", {
 	cz_purchase_amount(frm) { cz_recalc_purchase(frm); },
 	cz_exchange_rate(frm) { cz_recalc_purchase(frm); },
 	cz_purchase_currency(frm) { cz_recalc_purchase(frm); },
+	cz_air_taxes_remove(frm) { cz_recalc_tickets(frm); },
+	cz_air_tickets_remove(frm) { cz_recalc_tickets(frm); },
 });
 
 // ---- hotel rows
@@ -131,5 +133,4 @@ frappe.ui.form.on("Voucher Air Ticket", {
 frappe.ui.form.on("Voucher Air Tax", {
 	amount(frm) { cz_recalc_tickets(frm); },
 	ticket_row_no(frm) { cz_recalc_tickets(frm); },
-	cz_air_taxes_remove(frm) { cz_recalc_tickets(frm); },
 });

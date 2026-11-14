@@ -4,7 +4,8 @@ import os
 import frappe
 
 from crown_zone_vouchers.setup import custom_fields
-from crown_zone_vouchers.setup.seed import (AIRLINE_TAX_CODES, BRAND_DEFAULTS, SERVICES, TERMS, VISA_DOCUMENTS)
+from crown_zone_vouchers.setup.seed import (AIRLINE_TAX_CODES, BRAND_DEFAULTS, SERVICES, TERMS, VISA_DOCUMENTS,
+                                            VOUCHER_SERIES)
 
 ROLES = ("Travel Sales", "Travel Accounts", "Travel Manager")
 TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates", "print")
@@ -114,6 +115,7 @@ def seed_masters():
         if not frappe.db.exists("Travel Service Type", name):
             doc = frappe.get_doc({"doctype": "Travel Service Type", "service_name": name, "enabled": 1,
                                   "voucher_prefix": vp, "invoice_prefix": ip,
+                                  "voucher_series": VOUCHER_SERIES.get(name),
                                   "default_item": item if frappe.db.exists("Item", item) else None})
             for t in TERMS[name]:
                 doc.append("terms", {"term": t})
@@ -125,8 +127,8 @@ def sync_naming_options():
     from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 
     v_opts, i_opts = [], []
-    for st in frappe.get_all("Travel Service Type", fields=["voucher_prefix", "invoice_prefix"]):
-        v_opts.append("%s-.YYYY.-.#####" % st.voucher_prefix)
+    for st in frappe.get_all("Travel Service Type", fields=["voucher_prefix", "invoice_prefix", "voucher_series"]):
+        v_opts.append(st.voucher_series or "%s-.YYYY.-.#####" % st.voucher_prefix)
         i_opts.append("%s-.YYYY.-.#####" % st.invoice_prefix)
     for doctype, new in (("Sales Order", v_opts), ("Sales Invoice", i_opts)):
         meta = frappe.get_meta(doctype)
@@ -146,6 +148,7 @@ VOUCHERS = [
     ("CZ Transport Voucher", "voucher_transport.html", ""),
     ("CZ Umrah Voucher", "voucher_package.html", '{% set pkg = "Umrah" %}'),
     ("CZ Hajj Voucher", "voucher_package.html", '{% set pkg = "Hajj" %}'),
+    ("CZ Tour Voucher", "voucher_tour.html", ""),
 ]
 
 # (service, template, title)
@@ -156,6 +159,7 @@ INVOICES = [
     ("Transport", "invoice_generic.html", "TRANSPORT"),
     ("Umrah", "invoice_generic.html", "UMRAH PACKAGE"),
     ("Hajj", "invoice_generic.html", "HAJJ PACKAGE"),
+    ("Tour", "invoice_generic.html", "TOUR"),
 ]
 
 
@@ -179,7 +183,8 @@ def print_format_defs():
     for i, (svc, tpl, pre) in enumerate([("Airline", "voucher_airline.html", ""), ("Hotel", "voucher_hotel.html", ""),
                                          ("Visa", "voucher_visa.html", ""), ("Transport", "voucher_transport.html", ""),
                                          ("Umrah", "voucher_package.html", '{% set pkg = "Umrah" %}'),
-                                         ("Hajj", "voucher_package.html", '{% set pkg = "Hajj" %}')]):
+                                         ("Hajj", "voucher_package.html", '{% set pkg = "Hajj" %}'),
+                                         ("Tour", "voucher_tour.html", "")]):
         v.append('{%% %s doc.service_type == "%s" %%}%s%s' % ("if" if i == 0 else "elif", svc, pre, _inc(tpl)))
     v.append("{% else %}<p>Select a Service Type to print this voucher.</p>{% endif %}")
     defs.append(("CZ Voucher", "Sales Order", "\n".join(v)))
@@ -196,7 +201,8 @@ def print_format_defs():
 def create_print_formats(force=False):
     for name, doctype, html in print_format_defs():
         exists = frappe.db.exists("Print Format", name)
-        if exists and not force:
+        # dispatchers are app-managed: always refresh so new services (e.g. Tour) are picked up on migrate
+        if exists and not force and name not in ("CZ Voucher", "CZ Invoice"):
             continue
         doc = frappe.get_doc("Print Format", name) if exists else frappe.new_doc("Print Format")
         doc.update({"name": name, "doc_type": doctype, "print_format_type": "Jinja", "custom_format": 1,

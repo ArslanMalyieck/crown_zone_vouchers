@@ -9,6 +9,8 @@
 <div class="cz-info">Visa: {{ v.cz_visa_type or "" }} &bull; Applicants: {{ (v.cz_travellers or []) | length }} &bull; Destination: {{ v.cz_destination_country or "" }}</div>
 {% elif doc.cz_service_type in ("Umrah", "Hajj") %}
 <div class="cz-info">Package: {{ v.cz_package_name or "" }} &bull; Pilgrims: {{ (v.cz_travellers or []) | length }} &bull; Dates: {{ cz_date(v.cz_travel_date) }} to {{ cz_date(v.cz_return_date) }}</div>
+{% elif doc.cz_service_type == "Tour" %}
+<div class="cz-info">Tour: {{ v.cz_tour_name or "" }} &bull; Date: {{ cz_date(v.cz_tour_date) }} &bull; Guests: {{ (v.cz_total_adults or 0) + (v.cz_total_children or 0) }}</div>
 {% elif doc.cz_service_type == "Transport" %}
 <div class="cz-info">Service: {{ v.cz_transport_service or "" }}</div>
 {% endif %}

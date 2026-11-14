@@ -8,6 +8,7 @@
   "enabled",
   "voucher_prefix",
   "invoice_prefix",
+  "voucher_series",
   "default_item",
   "default_tax_template",
   "terms_section",
@@ -43,6 +44,12 @@
    "label": "Invoice Prefix",
    "reqd": 1,
    "description": "Invoice no. = PREFIX-YYYY-00001"
+  },
+  {
+   "fieldname": "voucher_series",
+   "fieldtype": "Data",
+   "label": "Voucher Series Override",
+   "description": "Optional full series, e.g. CZ-ACT-.YYYY.-.#### (overrides prefix)"
   },
   {
    "fieldname": "default_item",

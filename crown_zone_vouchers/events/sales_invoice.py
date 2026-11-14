@@ -3,7 +3,7 @@ from frappe import _
 
 ACCOUNTS_ROLES = ("Travel Accounts", "Travel Manager", "Accounts Manager", "System Manager")
 DEFAULT_INV = {"Airline": "INV-AIR", "Hotel": "INV-HTL", "Visa": "INV-VISA", "Transport": "INV-TRN",
-               "Umrah": "INV-UMH", "Hajj": "INV-HAJ"}
+               "Umrah": "INV-UMH", "Hajj": "INV-HAJ", "Tour": "INV-TUR"}
 
 
 def inv_series(service_type):

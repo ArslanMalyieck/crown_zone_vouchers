@@ -45,6 +45,8 @@ jinja = {
         "crown_zone_vouchers.utils.cz_money",
         "crown_zone_vouchers.utils.cz_date",
         "crown_zone_vouchers.utils.cz_datetime",
+        "crown_zone_vouchers.utils.cz_datefmt",
+        "crown_zone_vouchers.utils.cz_time12",
         "crown_zone_vouchers.utils.cz_time",
         "crown_zone_vouchers.utils.cz_addr",
         "crown_zone_vouchers.utils.cz_rooms",
