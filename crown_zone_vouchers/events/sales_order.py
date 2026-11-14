@@ -167,6 +167,8 @@ def sync_items(doc):
         info = cache[code]
         r.update(item_name=info.item_name, uom=info.stock_uom, stock_uom=info.stock_uom,
                  conversion_factor=1, delivery_date=doc.delivery_date)
+        if frappe.get_meta("Sales Order Item").has_field("custom_item_code"):
+            r["custom_item_code"] = code
         doc.append("items", r)
 
 
