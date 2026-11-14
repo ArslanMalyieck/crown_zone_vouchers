@@ -140,7 +140,7 @@ frappe.ui.form.on("Voucher Air Tax", {
 function cz_apply_item_table_mode(frm) {
 	if (!frm.fields_dict || !frm.fields_dict.items) return;
 	const is_voucher = !!frm.doc.service_type;
-	frm.set_df_property("items", "read_only", is_voucher ? 1 : 0);
+	frm.set_df_property("items", "read_only", 0);
 	frm.set_df_property("items", "reqd", is_voucher ? 0 : 1);
 }
 

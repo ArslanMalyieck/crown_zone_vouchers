@@ -40,7 +40,8 @@ def before_validate(doc, method=None):
         doc.cz_prepared_on = now_datetime()
     add_default_documents(doc)
     compute_children(doc)
-    sync_items(doc)
+    if not doc.get("items"):
+        sync_items(doc)
 
 
 def validate(doc, method=None):
