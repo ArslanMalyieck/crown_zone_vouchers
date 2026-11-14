@@ -119,6 +119,11 @@ def compute_children(doc):
 
     for r in doc.cz_service_lines:
         r.amount = flt(r.qty) * flt(r.rate)
+        tax_rate = cint(r.get("tax_rate") if r.get("tax_rate") not in (None, "") else 5)
+        non_taxable = flt(r.get("non_taxable_price"))
+        taxable = flt((flt(r.rate) - non_taxable) * 100 / (100 + tax_rate), 2) if (100 + tax_rate) else 0
+        r.taxable_price = taxable
+        r.vat = flt(taxable * tax_rate / 100, 2)
 
     line_purchase_total = sum(flt(r.get("purchase_amount")) for r in doc.cz_service_lines)
     doc.cz_purchase_amount_pkr = flt(doc.cz_purchase_amount) * rate
@@ -160,6 +165,8 @@ def sync_items(doc):
                 description=" - ".join([x for x in (r.category, r.description) if x]) or st)
             if item_meta.has_field("final_price"):
                 row["final_price"] = flt(r.rate)
+            if item_meta.has_field("tax_rate"):
+                row["tax_rate"] = cint(r.get("tax_rate") if r.get("tax_rate") not in (None, "") else 5)
             if item_meta.has_field("taxed_price"):
                 row["taxed_price"] = flt(r.get("taxable_price"))
             if item_meta.has_field("government_fee"):
@@ -172,6 +179,8 @@ def sync_items(doc):
                 row["ticket_no"] = r.get("ticket_no")
             if item_meta.has_field("cz_ticket_no"):
                 row["cz_ticket_no"] = r.get("ticket_no")
+            if item_meta.has_field("supplier"):
+                row["supplier"] = r.get("supplier") or doc.get("cz_supplier")
             rows.append(row)
 
     if not rows:
@@ -190,7 +199,7 @@ def sync_items(doc):
                  conversion_factor=1, delivery_date=doc.delivery_date)
         if item_meta.has_field("custom_item_code"):
             r["custom_item_code"] = code
-        if doc.get("cz_supplier") and item_meta.has_field("supplier"):
+        if doc.get("cz_supplier") and item_meta.has_field("supplier") and not r.get("supplier"):
             r["supplier"] = doc.cz_supplier
         if (len(rows) == 1 and item_meta.has_field("purchase_price")
                 and "purchase_price" not in r):
@@ -206,7 +215,8 @@ def validate_for_post(doc):
 
     if doc.cz_booking_status != "Confirmed":
         add(_("Booking Status must be Confirmed - unconfirmed entries cannot be posted."))
-    if not doc.cz_supplier:
+    line_suppliers = [r.get("supplier") for r in doc.cz_service_lines or []]
+    if not doc.cz_supplier and not (line_suppliers and all(line_suppliers)):
         add(_("Supplier / Operator is required."))
     if not doc.items or flt(doc.base_net_total) <= 0:
         add(_("Sales amount is missing - add tickets / rooms / service lines with sale rates."))

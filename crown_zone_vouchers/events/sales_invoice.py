@@ -28,8 +28,33 @@ def before_insert(doc, method=None):
         doc.naming_series = inv_series(doc.cz_service_type)
 
 
+def _copy_item_details(doc):
+    if not doc.get("cz_travel_voucher"):
+        return
+    invoice_fields = {df.fieldname for df in frappe.get_meta("Sales Invoice Item").fields}
+    order_fields = {df.fieldname for df in frappe.get_meta("Sales Order Item").fields}
+    copy_fields = [f for f in ("supplier", "purchase_price", "purchase_tax_rate", "final_price",
+                               "government_fee", "tax_rate", "taxed_price", "vat",
+                               "ticket_no", "cz_ticket_no", "custom_item_code")
+                   if f in invoice_fields and f in order_fields]
+    for item in doc.items:
+        source_name = item.get("so_detail")
+        if not source_name:
+            continue
+        source = frappe.db.get_value("Sales Order Item", source_name, copy_fields, as_dict=True)
+        if not source:
+            continue
+        for fieldname in copy_fields:
+            value = source.get(fieldname)
+            if value is not None and value != "":
+                setattr(item, fieldname, value)
+        if item.get("supplier") and "supplier_name" in invoice_fields:
+            item.supplier_name = frappe.db.get_value("Supplier", item.supplier, "supplier_name")
+
+
 def before_validate(doc, method=None):
     _link_voucher(doc)
+    _copy_item_details(doc)
 
 
 def validate(doc, method=None):

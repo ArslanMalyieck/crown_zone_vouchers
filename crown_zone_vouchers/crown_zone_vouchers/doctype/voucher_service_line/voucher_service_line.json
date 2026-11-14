@@ -9,11 +9,13 @@
   "item_code",
   "qty",
   "rate",
-  "taxable_price",
+  "tax_rate",
   "non_taxable_price",
+  "taxable_price",
   "vat",
   "purchase_amount",
   "ticket_no",
+  "supplier",
   "amount"
  ],
  "fields": [
@@ -56,11 +58,21 @@
    "columns": 2
   },
   {
+   "fieldname": "tax_rate",
+   "fieldtype": "Select",
+   "label": "Tax Rate",
+   "options": "5\n0",
+   "default": "5",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
    "fieldname": "taxable_price",
    "fieldtype": "Currency",
    "label": "Taxable (per unit)",
    "in_list_view": 1,
-   "columns": 1
+   "columns": 1,
+   "read_only": 1
   },
   {
    "fieldname": "non_taxable_price",
@@ -74,7 +86,8 @@
    "fieldtype": "Currency",
    "label": "VAT (per unit)",
    "in_list_view": 1,
-   "columns": 1
+   "columns": 1,
+   "read_only": 1
   },
   {
    "fieldname": "purchase_amount",
@@ -97,10 +110,18 @@
    "read_only": 1,
    "in_list_view": 1,
    "columns": 2
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier",
+   "in_list_view": 1,
+   "columns": 1
   }
  ],
  "links": [],
- "modified": "2026-11-14 16:26:39.234010",
+ "modified": "2026-11-14 16:41:48.424258",
  "modified_by": "Administrator",
  "module": "Crown Zone Vouchers",
  "name": "Voucher Service Line",
