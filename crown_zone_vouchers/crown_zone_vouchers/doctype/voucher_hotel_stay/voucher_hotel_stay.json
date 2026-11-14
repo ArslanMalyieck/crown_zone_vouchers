@@ -1,0 +1,140 @@
+{
+ "actions": [],
+ "creation": "2026-10-29 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "hotel_name",
+  "city",
+  "check_in",
+  "check_out",
+  "nights",
+  "room_type",
+  "rooms",
+  "occupancy",
+  "guests_text",
+  "meal_plan",
+  "bed_type",
+  "extra_bed",
+  "sale_rate",
+  "other_fees",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "hotel_name",
+   "fieldtype": "Data",
+   "label": "Hotel",
+   "description": "Blank for Hotel vouchers (taken from header); required for Umrah / Hajj",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City",
+   "description": "Makkah / Madinah / Mina ...",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "check_in",
+   "fieldtype": "Date",
+   "label": "Check-in"
+  },
+  {
+   "fieldname": "check_out",
+   "fieldtype": "Date",
+   "label": "Check-out"
+  },
+  {
+   "fieldname": "nights",
+   "fieldtype": "Int",
+   "label": "Nights",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "room_type",
+   "fieldtype": "Data",
+   "label": "Room Type",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "rooms",
+   "fieldtype": "Int",
+   "label": "Rooms",
+   "default": "1",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "occupancy",
+   "fieldtype": "Select",
+   "label": "Occupancy",
+   "options": "\nSingle\nDouble\nTriple\nQuad\nQuint\nSharing",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "guests_text",
+   "fieldtype": "Data",
+   "label": "Guests",
+   "description": "e.g. 4 Adults / 2 Adults + 2 Children"
+  },
+  {
+   "fieldname": "meal_plan",
+   "fieldtype": "Select",
+   "label": "Meal Plan",
+   "options": "\nRO\nBB\nHB\nFB\nAI",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "bed_type",
+   "fieldtype": "Data",
+   "label": "Bed Type"
+  },
+  {
+   "fieldname": "extra_bed",
+   "fieldtype": "Select",
+   "label": "Extra Bed",
+   "options": "No\nYes",
+   "default": "No"
+  },
+  {
+   "fieldname": "sale_rate",
+   "fieldtype": "Currency",
+   "label": "Sale Rate / Room / Night (PKR)",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "other_fees",
+   "fieldtype": "Currency",
+   "label": "Other Fees (PKR)"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount (PKR)",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-29 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Crown Zone Vouchers",
+ "name": "Voucher Hotel Stay",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1,
+ "permissions": []
+}

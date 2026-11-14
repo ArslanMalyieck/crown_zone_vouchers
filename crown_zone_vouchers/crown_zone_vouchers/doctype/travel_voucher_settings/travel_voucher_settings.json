@@ -1,0 +1,110 @@
+{
+ "actions": [],
+ "creation": "2026-10-29 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company_name_display",
+  "tagline",
+  "address",
+  "ptcl",
+  "mobile",
+  "email",
+  "website",
+  "srb_no",
+  "logo",
+  "sec_docs",
+  "default_visa_documents",
+  "overwrite_print_formats"
+ ],
+ "fields": [
+  {
+   "fieldname": "company_name_display",
+   "fieldtype": "Data",
+   "label": "Company Name (print)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tagline",
+   "fieldtype": "Data",
+   "label": "Tagline"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Small Text",
+   "label": "Address"
+  },
+  {
+   "fieldname": "ptcl",
+   "fieldtype": "Data",
+   "label": "PTCL"
+  },
+  {
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "label": "Mobile"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "website",
+   "fieldtype": "Data",
+   "label": "Website"
+  },
+  {
+   "fieldname": "srb_no",
+   "fieldtype": "Data",
+   "label": "SRB No."
+  },
+  {
+   "fieldname": "logo",
+   "fieldtype": "Attach Image",
+   "label": "Logo",
+   "description": "Leave blank to use the Company logo"
+  },
+  {
+   "fieldname": "sec_docs",
+   "fieldtype": "Section Break",
+   "label": "Defaults"
+  },
+  {
+   "fieldname": "default_visa_documents",
+   "fieldtype": "Small Text",
+   "label": "Default Visa Document Checklist (one per line)"
+  },
+  {
+   "fieldname": "overwrite_print_formats",
+   "fieldtype": "Check",
+   "label": "Overwrite print formats on migrate",
+   "default": "0",
+   "description": "Tick only while developing; it resets edited CZ print formats from the app files."
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-29 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Crown Zone Vouchers",
+ "name": "Travel Voucher Settings",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "issingle": 1
+}

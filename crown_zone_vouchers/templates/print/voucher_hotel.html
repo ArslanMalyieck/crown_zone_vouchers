@@ -1,0 +1,40 @@
+{% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
+{% include "crown_zone_vouchers/templates/print/_css.html" %}
+<div class="cz">
+{{ m.header("HOTEL BOOKING VOUCHER", doc) }}
+
+{{ m.sec("GUEST INFORMATION") }}
+{{ m.kv([
+ ("Guest Name", doc.cz_lead_guest or doc.contact_display or doc.customer_name), ("Contact No.", doc.contact_mobile or doc.cz_contact_whatsapp),
+ ("Email", doc.contact_email), ("Nationality", doc.cz_nationality),
+ ("Total Adults", doc.cz_total_adults), ("Total Children", (doc.cz_total_children or 0) ~ (" (Ages: " ~ doc.cz_children_ages ~ ")" if doc.cz_children_ages else ""))
+]) }}
+
+{{ m.sec("HOTEL INFORMATION") }}
+{{ m.kv([
+ ("Hotel Name", doc.cz_hotel_name), ("Address", doc.cz_hotel_address),
+ ("City / Country", doc.cz_hotel_city_country), ("Booking Reference", doc.cz_booking_reference),
+ ("Supplier Confirmation No.", doc.cz_supplier_confirmation_no), ("Booking Status", doc.cz_booking_status)
+]) }}
+
+{{ m.sec("STAY DETAILS") }}
+{{ m.kv([("Check-in Date", cz_date(doc.cz_check_in)), ("Check-out Date", cz_date(doc.cz_check_out)), ("Total Nights", doc.cz_total_nights)], 3) }}
+
+{{ m.sec("ROOM DETAILS") }}
+<table class="cz-tbl"><thead><tr><th>#</th><th>Room Type</th><th>Rooms</th><th>Occupancy</th><th>Guests</th><th>Meal Plan</th><th>Bed Type</th><th>Extra Bed</th></tr></thead><tbody>
+{% for r in doc.cz_hotel_stays %}
+<tr><td>{{ loop.index }}</td><td>{{ r.room_type or "" }}</td><td>{{ r.rooms or "" }}</td><td>{{ r.occupancy or "" }}</td><td>{{ r.guests_text or "" }}</td><td>{{ r.meal_plan or "" }}</td><td>{{ r.bed_type or "" }}</td><td>{{ r.extra_bed or "" }}</td></tr>
+{% endfor %}
+</tbody></table>
+
+{{ m.sec("GUEST NAMES (ROOM-WISE)") }}
+<table class="cz-kv">
+{% for g in cz_rooms(doc.cz_travellers) %}
+<tr><td class="l">Room {{ g.room }}:</td><td class="v" style="width:85%">{% for n in g.names %}{{ loop.index }}. {{ n }}&nbsp;&nbsp; {% endfor %}</td></tr>
+{% endfor %}
+</table>
+
+{{ m.sec("PREPARED & POSTED DETAILS") }}
+{{ m.prepared(doc) }}
+{{ m.foot(doc, "HOTEL POLICIES & TERMS") }}
+</div>

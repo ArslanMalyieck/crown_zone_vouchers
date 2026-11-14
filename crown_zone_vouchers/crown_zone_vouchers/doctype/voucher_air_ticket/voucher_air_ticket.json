@@ -1,0 +1,180 @@
+{
+ "actions": [],
+ "creation": "2026-10-29 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "passenger_name",
+  "airline",
+  "pnr",
+  "ticket_no",
+  "doc_type",
+  "ticket_date",
+  "bsp",
+  "fare_type",
+  "ticket_type",
+  "gds",
+  "booking_ref",
+  "tour_code",
+  "supplier_fare",
+  "taxes_total",
+  "ticket_gross",
+  "commission_percent",
+  "commission_amount",
+  "wht_percent",
+  "wht_amount",
+  "supplier_amount_foreign",
+  "supplier_amount_pkr",
+  "sale_amount_pkr"
+ ],
+ "fields": [
+  {
+   "fieldname": "passenger_name",
+   "fieldtype": "Data",
+   "label": "Passenger",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "airline",
+   "fieldtype": "Data",
+   "label": "Airline",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "pnr",
+   "fieldtype": "Data",
+   "label": "PNR",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "ticket_no",
+   "fieldtype": "Data",
+   "label": "Ticket No.",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "doc_type",
+   "fieldtype": "Select",
+   "label": "Doc Type",
+   "options": "ET\nEMD\nMCO",
+   "default": "ET"
+  },
+  {
+   "fieldname": "ticket_date",
+   "fieldtype": "Date",
+   "label": "Ticket Date"
+  },
+  {
+   "fieldname": "bsp",
+   "fieldtype": "Select",
+   "label": "BSP",
+   "options": "No\nYes",
+   "default": "No"
+  },
+  {
+   "fieldname": "fare_type",
+   "fieldtype": "Select",
+   "label": "Fare Type",
+   "options": "One Way\nReturn\nOpen Jaw",
+   "default": "One Way"
+  },
+  {
+   "fieldname": "ticket_type",
+   "fieldtype": "Select",
+   "label": "Ticket Type",
+   "options": "Domestic\nInternational",
+   "default": "International"
+  },
+  {
+   "fieldname": "gds",
+   "fieldtype": "Data",
+   "label": "GDS / Supplier System"
+  },
+  {
+   "fieldname": "booking_ref",
+   "fieldtype": "Data",
+   "label": "Booking Reference"
+  },
+  {
+   "fieldname": "tour_code",
+   "fieldtype": "Data",
+   "label": "Tour Code"
+  },
+  {
+   "fieldname": "supplier_fare",
+   "fieldtype": "Currency",
+   "label": "Fare (Supplier Currency)",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "taxes_total",
+   "fieldtype": "Currency",
+   "label": "Airline Taxes (auto)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ticket_gross",
+   "fieldtype": "Currency",
+   "label": "Ticket Gross (auto)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "commission_percent",
+   "fieldtype": "Percent",
+   "label": "Commission %"
+  },
+  {
+   "fieldname": "commission_amount",
+   "fieldtype": "Currency",
+   "label": "Commission (auto)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "wht_percent",
+   "fieldtype": "Percent",
+   "label": "WHT % on Commission"
+  },
+  {
+   "fieldname": "wht_amount",
+   "fieldtype": "Currency",
+   "label": "WHT (auto)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supplier_amount_foreign",
+   "fieldtype": "Currency",
+   "label": "Ticket Net / Supplier Payable (auto)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supplier_amount_pkr",
+   "fieldtype": "Currency",
+   "label": "Supplier Payable PKR (auto)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sale_amount_pkr",
+   "fieldtype": "Currency",
+   "label": "Sale Amount (PKR)",
+   "in_list_view": 1,
+   "columns": 2
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-29 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Crown Zone Vouchers",
+ "name": "Voucher Air Ticket",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1,
+ "permissions": []
+}

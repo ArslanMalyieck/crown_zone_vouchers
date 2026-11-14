@@ -1,0 +1,126 @@
+{
+ "actions": [],
+ "creation": "2026-10-29 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sector_from",
+  "sector_to",
+  "airline",
+  "flight_no",
+  "cabin_class",
+  "rbd",
+  "travel_date",
+  "departure_time",
+  "arrival_date",
+  "arrival_time",
+  "status",
+  "fare_basis",
+  "baggage",
+  "transport_mode"
+ ],
+ "fields": [
+  {
+   "fieldname": "sector_from",
+   "fieldtype": "Data",
+   "label": "From",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "sector_to",
+   "fieldtype": "Data",
+   "label": "To",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "airline",
+   "fieldtype": "Data",
+   "label": "Airline"
+  },
+  {
+   "fieldname": "flight_no",
+   "fieldtype": "Data",
+   "label": "Flight No.",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "cabin_class",
+   "fieldtype": "Data",
+   "label": "Class",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "rbd",
+   "fieldtype": "Data",
+   "label": "RBD"
+  },
+  {
+   "fieldname": "travel_date",
+   "fieldtype": "Date",
+   "label": "Travel Date",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "departure_time",
+   "fieldtype": "Time",
+   "label": "Departure",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "arrival_date",
+   "fieldtype": "Date",
+   "label": "Arrival Date"
+  },
+  {
+   "fieldname": "arrival_time",
+   "fieldtype": "Time",
+   "label": "Arrival",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Confirmed\nOK\nWaitlisted\nOn Request",
+   "default": "Confirmed",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "fare_basis",
+   "fieldtype": "Data",
+   "label": "Fare Basis"
+  },
+  {
+   "fieldname": "baggage",
+   "fieldtype": "Data",
+   "label": "Baggage"
+  },
+  {
+   "fieldname": "transport_mode",
+   "fieldtype": "Select",
+   "label": "Mode",
+   "options": "Flight\nBus\nTrain",
+   "default": "Flight"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-29 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Crown Zone Vouchers",
+ "name": "Voucher Flight Segment",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1,
+ "permissions": []
+}

@@ -1,0 +1,44 @@
+{% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
+{% include "crown_zone_vouchers/templates/print/_css.html" %}
+{% set tickets = doc.cz_air_tickets or [] %}
+<div class="cz">
+{{ m.header("AIRLINE TICKET SALES VOUCHER", doc) }}
+
+{{ m.sec("CUSTOMER INFORMATION") }}
+{{ m.kv([
+ ("Customer Name", doc.contact_display or doc.customer_name), ("Contact No.", doc.contact_mobile or doc.cz_contact_whatsapp),
+ ("Company Name", doc.customer_name), ("Email", doc.contact_email),
+ ("Address", cz_addr(doc.address_display)), ("Reference", doc.po_no or doc.cz_booking_reference)
+]) }}
+
+{{ m.sec("PASSENGER DETAILS") }}
+<table class="cz-tbl"><thead><tr><th>#</th><th>Passenger Name</th><th>Type</th><th>Date of Birth</th><th>Nationality</th><th>Passport No.</th><th>Passport Expiry</th><th>Frequent Flyer No.</th></tr></thead><tbody>
+{% for p in doc.cz_travellers %}
+<tr><td>{{ loop.index }}</td><td>{{ p.traveller_name or "" }}</td><td>{{ p.traveller_type or "" }}</td><td>{{ cz_date(p.date_of_birth) }}</td><td>{{ p.nationality or "" }}</td><td>{{ p.passport_no or "" }}</td><td>{{ cz_date(p.passport_expiry) }}</td><td>{{ p.frequent_flyer_no or "" }}</td></tr>
+{% endfor %}
+</tbody></table>
+
+{{ m.sec("TICKET DETAILS") }}
+<table class="cz-tbl"><thead><tr><th>#</th><th>Passenger</th><th>Airline</th><th>PNR</th><th>Ticket No.</th><th>Booking Reference</th><th>Tour Code</th></tr></thead><tbody>
+{% for t in tickets %}
+<tr><td>{{ loop.index }}</td><td>{{ t.passenger_name or "" }}</td><td><b>{{ t.airline or "" }}</b></td><td>{{ t.pnr or "" }}</td><td>{{ t.ticket_no or "" }}</td><td>{{ t.booking_ref or "" }}</td><td>{{ t.tour_code or "" }}</td></tr>
+{% endfor %}
+</tbody></table>
+
+{{ m.sec("FLIGHT ITINERARY") }}
+<table class="cz-tbl"><thead><tr><th>#</th><th>From</th><th>To</th><th>Flight No.</th><th>Class</th><th>Travel Date</th><th>Departure</th><th>Arrival</th><th>Status</th></tr></thead><tbody>
+{% for s in doc.cz_flight_segments %}
+<tr><td>{{ loop.index }}</td><td>{{ s.sector_from or "" }}</td><td>{{ s.sector_to or "" }}</td><td>{{ s.flight_no or "" }}</td><td>{{ s.cabin_class or "" }}</td><td>{{ cz_date(s.travel_date) }}</td><td>{{ cz_time(s.departure_time) }}</td><td>{{ cz_time(s.arrival_time) }}</td><td>{{ s.status or "" }}</td></tr>
+{% endfor %}
+</tbody></table>
+
+{{ m.sec("ADDITIONAL INFORMATION") }}
+{{ m.kv([
+ ("Booking Date", cz_date(doc.cz_booking_date)), ("Issue Date", cz_date(tickets[0].ticket_date) if tickets else ""),
+ ("Supplier / GDS", (tickets[0].gds if tickets and tickets[0].gds else doc.cz_supplier)), ("Remarks", doc.cz_customer_remarks)
+]) }}
+
+{{ m.sec("PREPARED & POSTED DETAILS") }}
+{{ m.prepared(doc) }}
+{{ m.foot(doc) }}
+</div>

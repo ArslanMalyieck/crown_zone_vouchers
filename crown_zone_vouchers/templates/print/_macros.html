@@ -1,0 +1,64 @@
+{% macro header(title, doc) %}
+{% set b = cz_brand() %}
+<div class="cz-topbar"></div>
+<table class="cz-hdr"><tr>
+<td class="cz-logo">{% if b.logo %}<img src="{{ b.logo }}">{% endif %}</td>
+<td><div class="cz-name">{{ b.name }}</div><div class="cz-tag">{{ b.tagline }}</div></td>
+<td class="cz-contact">{{ b.address }}<br>PTCL: {{ b.ptcl }}<br>Mob: {{ b.mobile }}<br>{{ b.email }}{% if b.website %} | {{ b.website }}{% endif %}</td>
+</tr></table>
+<table class="cz-titlebar"><tr>
+<td class="t">{{ title }}</td>
+<td class="vb"><b>Voucher No:</b> {{ doc.name }}<br><b>Voucher Date:</b> {{ cz_date(doc.transaction_date) }}</td>
+</tr></table>
+{% endmacro %}
+
+{% macro sec(title) %}<div class="cz-sec">{{ title }}<i></i></div>{% endmacro %}
+
+{% macro kv(pairs, cols=2) %}
+<table class="cz-kv c{{ cols }}">
+{% for l, v in pairs %}
+{% if (loop.index0 % cols) == 0 %}<tr>{% endif %}
+<td class="l">{{ l }}</td><td class="v">{{ v if v not in (None, False) else "" }}</td>
+{% if loop.last and (loop.index0 % cols) != (cols - 1) %}{% for i in range(cols - 1 - (loop.index0 % cols)) %}<td class="l"></td><td class="v"></td>{% endfor %}{% endif %}
+{% if (loop.index0 % cols) == (cols - 1) or loop.last %}</tr>{% endif %}
+{% endfor %}
+</table>
+{% endmacro %}
+
+{% macro prepared(doc) %}
+<table class="cz-sign">
+<tr><td class="l">Prepared By</td><td class="v">{{ cz_user(doc.cz_prepared_by) }}</td><td class="l">Posted By</td><td class="v">{{ cz_user(doc.cz_posted_by) }}</td></tr>
+<tr><td class="l">Date</td><td class="v">{{ cz_datetime(doc.cz_prepared_on) }}</td><td class="l">Date</td><td class="v">{{ cz_datetime(doc.cz_posted_on) }}</td></tr>
+</table>
+{% endmacro %}
+
+{% macro wave() %}
+<div class="cz-wave"><svg width="100%" height="34" viewBox="0 0 800 34" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M0,16 C120,40 260,0 400,16 C540,32 680,4 800,16 L800,34 L0,34 Z" fill="#0B2A55"/>
+<path d="M0,24 C140,44 280,8 420,24 C560,40 690,14 800,26 L800,34 L0,34 Z" fill="#C9A03F"/>
+<path d="M0,30 C150,40 300,20 450,30 C600,38 700,24 800,31 L800,34 L0,34 Z" fill="#0B2A55"/>
+</svg></div>
+{% endmacro %}
+
+{% macro foot(doc, title="TERMS & CONDITIONS", inquiries=False) %}
+{% set terms = cz_terms(doc.service_type) %}
+{% set b = cz_brand() %}
+<table style="margin-top:8px"><tr>
+<td style="width:98px;vertical-align:top"><div class="cz-qrbox"><img src="{{ cz_qr('CZ|' ~ doc.name ~ '|' ~ (doc.cz_posted_on or '')) }}"><br>{{ doc.name }}</div></td>
+<td style="vertical-align:top;padding-left:6px"><div class="cz-terms"><div class="h">{{ title }}</div><ol>{% for t in terms %}<li>{{ t }}</li>{% endfor %}</ol></div></td>
+{% if inquiries %}<td class="cz-inq"><b>For Inquiries:</b><br>{{ b.mobile }}<br>{{ b.email }}<br>{{ b.website }}</td>{% endif %}
+</tr></table>
+{{ wave() }}
+{% endmacro %}
+
+{% macro inv_header(title, doc) %}
+{% set b = cz_brand() %}
+<div class="cz-topbar"></div>
+<table class="cz-hdr"><tr>
+<td class="cz-logo">{% if b.logo %}<img src="{{ b.logo }}">{% endif %}</td>
+<td><div class="cz-name">{{ b.name }}</div>
+<div class="cz-tag">{{ b.address | replace("<br>", ", ") }}<br>PTCL: {{ b.ptcl }} | Mobile: {{ b.mobile }}{% if b.srb %} | SRB: {{ b.srb }}{% endif %}</div></td>
+<td class="cz-contact" style="text-align:right;border-left:0"><div style="font-size:13pt;font-weight:bold;color:#0B2A55">{{ title }}</div>
+Invoice No.: <b>{{ doc.name }}</b><br>Date: {{ cz_date(doc.posting_date) }}</td>
+</tr></table>
+{% endmacro %}

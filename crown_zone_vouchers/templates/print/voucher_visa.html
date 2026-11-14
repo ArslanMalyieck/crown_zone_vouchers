@@ -1,0 +1,42 @@
+{% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
+{% include "crown_zone_vouchers/templates/print/_css.html" %}
+<div class="cz">
+{{ m.header("VISA APPLICATION VOUCHER", doc) }}
+
+{{ m.sec("CUSTOMER INFORMATION") }}
+{{ m.kv([
+ ("Customer Name", doc.contact_display or doc.customer_name), ("Contact No.", doc.contact_mobile or doc.cz_contact_whatsapp),
+ ("Email", doc.contact_email), ("Nationality", doc.cz_nationality),
+ ("Total Applicants", doc.cz_travellers | length), ("Application Type", doc.cz_visa_type)
+]) }}
+
+{{ m.sec("APPLICANT DETAILS") }}
+<table class="cz-tbl"><thead><tr><th>#</th><th>Full Name</th><th>Passport No.</th><th>Nationality</th><th>Date of Birth</th><th>Gender</th><th>Relation</th></tr></thead><tbody>
+{% for p in doc.cz_travellers %}
+<tr><td>{{ loop.index }}</td><td>{{ p.traveller_name or "" }}</td><td>{{ p.passport_no or "" }}</td><td>{{ p.nationality or "" }}</td><td>{{ cz_date(p.date_of_birth) }}</td><td>{{ p.gender or "" }}</td><td>{{ p.relation or "" }}</td></tr>
+{% endfor %}
+</tbody></table>
+
+{{ m.sec("VISA DETAILS") }}
+{{ m.kv([
+ ("Country", doc.cz_destination_country), ("Processing Country", doc.cz_processing_country),
+ ("Visa Type", doc.cz_visa_type), ("Embassy / Visa Center", doc.cz_embassy_center),
+ ("Purpose", doc.cz_purpose_of_travel), ("Expected Travel Date", cz_date(doc.cz_expected_travel_date)),
+ ("Application Date", cz_date(doc.cz_application_date)), ("Expected Return Date", cz_date(doc.cz_expected_return_date)),
+ ("Application / Reference No.", doc.cz_application_ref), ("Processing Time", doc.cz_processing_time),
+ ("Visa Validity", doc.cz_visa_validity), ("Application Status", doc.cz_visa_status)
+]) }}
+
+{{ m.sec("REQUIRED DOCUMENTS") }}
+<table class="cz-kv"><tr>
+{% for d in doc.cz_doc_checklist %}
+<td style="width:50%;border:1px solid #CBD6E8;padding:2px 6px"><span class="cz-chk {{ 'on' if d.received else '' }}"></span>{{ d.document_name }}</td>
+{% if loop.index % 2 == 0 and not loop.last %}</tr><tr>{% endif %}
+{% if loop.last and loop.index % 2 == 1 %}<td style="border:1px solid #CBD6E8"></td>{% endif %}
+{% endfor %}
+</tr></table>
+
+{{ m.sec("PREPARED & POSTED DETAILS") }}
+{{ m.prepared(doc) }}
+{{ m.foot(doc, "TERMS & CONDITIONS", True) }}
+</div>

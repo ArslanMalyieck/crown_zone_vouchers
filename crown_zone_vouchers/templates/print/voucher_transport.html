@@ -1,0 +1,28 @@
+{% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
+{% include "crown_zone_vouchers/templates/print/_css.html" %}
+<div class="cz">
+{{ m.header("TRANSPORT VOUCHER", doc) }}
+<div class="cz-info">Customer confirmation of service - no financial amounts</div>
+
+{% for t in doc.cz_trips %}
+{{ m.sec("BOOKING / CUSTOMER DETAILS" ~ (" - TRIP " ~ loop.index if doc.cz_trips | length > 1 else "")) }}
+<table class="cz-grid">
+<tr><td><div class="lb">Customer / Company</div><div class="bx">{{ doc.customer_name }}</div></td>
+<td><div class="lb">Passenger &amp; Contact</div><div class="bx">{{ doc.cz_lead_guest or doc.contact_display }}{% if doc.cz_contact_whatsapp or doc.contact_mobile %} / {{ doc.cz_contact_whatsapp or doc.contact_mobile }}{% endif %}</div></td>
+<td><div class="lb">Service Type</div><div class="bx">{{ doc.cz_transport_service }}</div></td></tr>
+<tr><td><div class="lb">Vehicle / Plate</div><div class="bx">{{ t.vehicle_type or "" }}{% if t.plate_no %} / {{ t.plate_no }}{% endif %}</div></td>
+<td><div class="lb">Pickup Date / Time</div><div class="bx">{{ cz_datetime(t.pickup_datetime) }}</div></td>
+<td><div class="lb">Pickup Location</div><div class="bx">{{ t.pickup_location or "" }}</div></td></tr>
+<tr><td><div class="lb">Drop-off Location</div><div class="bx">{{ t.dropoff_location or "" }}</div></td>
+<td><div class="lb">Flight No.</div><div class="bx">{{ t.flight_no or "" }}</div></td>
+<td><div class="lb">No. of Passengers</div><div class="bx">{{ t.passengers or "" }}</div></td></tr>
+<tr><td><div class="lb">Driver / Contact</div><div class="bx">{{ t.driver_name or "" }}{% if t.driver_contact %} / {{ t.driver_contact }}{% endif %}</div></td>
+<td><div class="lb">Waiting / Extra Hours</div><div class="bx">{{ t.waiting_hours or "" }}</div></td>
+<td><div class="lb">Driver Notes</div><div class="bx">{{ t.driver_notes or "" }}</div></td></tr>
+</table>
+{% endfor %}
+
+{{ m.sec("PREPARED & POSTED DETAILS") }}
+{{ m.prepared(doc) }}
+{{ m.foot(doc, "TERMS & CONDITIONS / AUTHORIZATION") }}
+</div>

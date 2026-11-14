@@ -1,0 +1,26 @@
+{% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
+{% include "crown_zone_vouchers/templates/print/_css.html" %}
+{% set v = cz_voucher(doc) %}
+<div class="cz">
+{{ m.inv_header("HOTEL SALES TAX INVOICE" if with_tax else "HOTEL SALES INVOICE", doc) }}
+{{ m.kv([
+ ("Invoice No.", doc.name), ("Hotel Confirmation No.", v.cz_supplier_confirmation_no),
+ ("Invoice Date", cz_date(doc.posting_date)), ("Voucher No.", doc.cz_travel_voucher),
+ ("Customer Name / Company", doc.customer_name), ("Currency", "PKR")
+]) }}
+
+<table class="cz-tbl" style="margin-top:6px"><thead><tr><th>Hotel / City</th><th>Room Type</th><th>Lead Guest</th><th class="c">Rooms</th><th class="c">Nights</th><th class="r">Rate</th><th class="r">Other Fees</th><th class="r">Amount</th></tr></thead><tbody>
+{% for i in doc.items %}
+<tr><td>{{ i.cz_hotel_city or (i.description or i.item_name) | striptags }}</td><td>{{ i.cz_room_type or "" }}</td><td>{{ i.cz_lead_guest or "" }}</td><td class="c">{{ i.cz_rooms or "" }}</td><td class="c">{{ i.cz_nights or "" }}</td><td class="r">{{ cz_money(i.cz_unit_rate) if i.cz_unit_rate else "" }}</td><td class="r">{{ cz_money(i.cz_other_fees) if i.cz_other_fees else "" }}</td><td class="r">{{ cz_money(i.amount) }}</td></tr>
+{% endfor %}
+</tbody></table>
+
+<table class="cz-kv" style="margin-top:6px"><tr>
+<td class="l">Check-in</td><td class="v">{{ cz_date(v.cz_check_in) }}</td><td class="l">Check-out</td><td class="v">{{ cz_date(v.cz_check_out) }}</td>
+<td class="l">Total Nights</td><td class="v">{{ v.cz_total_nights or "" }}</td></tr></table>
+{% if v.cz_customer_remarks %}<div class="cz-note">Remarks: {{ v.cz_customer_remarks }}</div>{% endif %}
+
+{% set total_label = "Hotel Charges (PKR)" %}{% set grand_label = "GRAND TOTAL (PKR)" %}
+{% include "crown_zone_vouchers/templates/print/_inv_totals.html" %}
+{{ m.wave() }}
+</div>

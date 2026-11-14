@@ -1,0 +1,22 @@
+{% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
+{% include "crown_zone_vouchers/templates/print/_css.html" %}
+{% set v = cz_voucher(doc) %}
+<div class="cz">
+{{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc) }}
+<div class="cz-bill">BILL TO: {{ doc.customer_name }}{% if doc.tax_id %} &nbsp;|&nbsp; NTN/CNIC: {{ doc.tax_id }}{% endif %} &nbsp;|&nbsp; Voucher Ref: {{ doc.cz_travel_voucher or "" }} &nbsp;|&nbsp; Currency: PKR</div>
+
+<table class="cz-tbl"><thead><tr><th>#</th><th>Passenger</th><th>Ticket No.</th><th>Airline</th><th>Sector</th><th>Travel Date</th><th class="r">{{ "Ticket Amount (PKR)" if with_tax else "Amount (PKR)" }}</th></tr></thead><tbody>
+{% for i in doc.items %}
+<tr><td>{{ loop.index }}</td><td>{{ i.cz_passenger or (i.description or i.item_name) | striptags }}</td><td>{{ i.cz_ticket_no or "" }}</td><td>{{ i.cz_airline or "" }}</td><td>{{ i.cz_sector or "" }}</td><td>{{ cz_date(i.cz_travel_date) }}</td><td class="r">{{ cz_money(i.amount) }}</td></tr>
+{% endfor %}
+</tbody></table>
+
+{% if with_tax %}
+{% set total_label = "Ticket Amount (PKR)" %}{% set grand_label = "GRAND TOTAL PAYABLE (PKR)" %}
+{% else %}
+{% set total_label = "Subtotal (PKR)" %}{% set grand_label = "TOTAL PAYABLE (PKR)" %}
+{% endif %}
+{% include "crown_zone_vouchers/templates/print/_inv_totals.html" %}
+{% if not with_tax %}<div class="cz-note">No separately itemized SRB. Tax classification as per configured compliance rules.</div>{% endif %}
+{{ m.wave() }}
+</div>
