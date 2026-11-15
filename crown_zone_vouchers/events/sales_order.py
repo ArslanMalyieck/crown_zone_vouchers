@@ -237,13 +237,12 @@ def sync_items(doc):
             fed = flt(taxes.get("FED"))
             xt = sum(v for code, v in taxes.items() if code not in ("YQ", "APT", "FED", "PSF", "SRB"))
             sale = flt(t.sale_amount_pkr)
-            fare = max(sale - (yq + apt + fed + xt), 0)
             row = dict(
                 item_code=default_item, qty=1, rate=sale,
                 description="Airline ticket %s - %s" % (t.ticket_no or "", t.passenger_name or ""),
                 cz_passenger=t.passenger_name, cz_ticket_no=t.ticket_no, cz_airline=t.airline,
                 cz_sector=sector, cz_travel_date=first_date,
-                tkt_fare=fare, yq_total=yq, yq_taxable=yq, yq_non_taxable=0,
+                yq_total=yq, yq_taxable=yq, yq_non_taxable=0,
                 apt_tax=apt, fed_tax=fed, xt_tax=xt, cz_tax_total=yq + apt + fed + xt,
                 cz_flight_no=(first_segment.flight_no if first_segment else None),
                 cz_class=(first_segment.cabin_class if first_segment else None),

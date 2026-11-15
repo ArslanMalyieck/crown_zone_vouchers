@@ -21,13 +21,14 @@
 {% set dep_date = i.get("cz_travel_date") or (segment.travel_date if segment else "") %}
 {% set sector = i.get("cz_sector") or (cz_sector(v) if v else "") %}
 {% set air_tax = (i.get("yq_total") or 0) + (i.get("apt_tax") or 0) + (i.get("fed_tax") or 0) + (i.get("xt_tax") or 0) %}
-{% set row_fare = i.get("tkt_fare") or ((i.get("amount") or 0) - air_tax if air_tax else i.get("amount")) %}
+{% set selling = i.get("rate") or i.get("amount") or 0 %}
+{% set row_fare = (selling - air_tax) if air_tax else selling %}
 <tr><td class="c">{{ loop.index }}</td><td>{{ i.get("cz_passenger") or (i.description or i.item_name) | striptags }}</td><td>{{ i.get("cz_ticket_no") or i.get("ticket_no") or "" }}</td><td>{{ (i.get("cz_flight_no") or (segment.flight_no if segment else "")) or "" }}</td><td class="c">{{ (i.get("cz_class") or (segment.cabin_class if segment else "")) or "" }}</td><td>{{ cz_datefmt(dep_date, "%d/%m/%y") }}</td><td>{{ sector }}</td><td class="r">{{ cz_money(row_fare) }}</td><td class="r">{{ cz_money(air_tax) }}</td><td class="r">{{ cz_money(i.get("amount")) }}</td></tr>
 {% endfor %}
 {{ m.pad([10 - (tickets|length), 0]|max, 10) }}
 </tbody></table>
-{% set fare_total = tickets|sum(attribute='tkt_fare') %}
 {% set ticket_total = tickets|sum(attribute='amount') %}
+{% set selling_total = tickets|sum(attribute='rate') or ticket_total %}
 {% set yq_total = tickets|sum(attribute='yq_total') %}
 {% set yq_taxable = tickets|sum(attribute='yq_taxable') %}
 {% set yq_non_taxable = tickets|sum(attribute='yq_non_taxable') %}
@@ -35,7 +36,7 @@
 {% set fed_total = tickets|sum(attribute='fed_tax') %}
 {% set xt_total = tickets|sum(attribute='xt_tax') %}
 {% set airline_tax_total = yq_total + apt_total + fed_total + xt_total %}
-{% if not fare_total and not airline_tax_total %}{% set fare_total = ticket_total %}{% endif %}
+{% set fare_total = selling_total - airline_tax_total %}
 <table class="cz-inv-totals">
 <tr class="sub"><td class="k">Fare Total ({{ doc.currency or "PKR" }})</td><td class="n">{{ cz_money(fare_total) }}</td></tr>
 {% if airline_tax_total %}
