@@ -1,11 +1,18 @@
-<table class="cz-invt" style="margin-top:6px">
-<tr><td></td><td class="k">{{ total_label or "Subtotal (PKR)" }}</td><td class="n">{{ cz_money(doc.net_total) }}</td></tr>
+<table class="cz-inv-totals">
+<tr class="sub"><td></td><td class="k">{{ total_label or "Subtotal" }} ({{ doc.currency or "PKR" }})</td><td class="n">{{ cz_money(doc.net_total) }}</td></tr>
+{% if doc.discount_amount and doc.discount_amount > 0 %}
+<tr><td></td><td class="k">Discount</td><td class="n">- {{ cz_money(doc.discount_amount) }}</td></tr>
+{% endif %}
 {% if with_tax %}
 {% for tx in doc.taxes %}
-<tr><td></td><td class="k">{{ tx.description }}{% if tx.rate and tx.charge_type != "Actual" %} ({{ tx.rate }}%){% endif %} (PKR)</td><td class="n">{{ cz_money(tx.tax_amount) }}</td></tr>
+<tr class="tax"><td></td><td class="k">{{ tx.description }}{% if tx.rate and tx.charge_type != "Actual" %} ({{ tx.rate }}%){% endif %}</td><td class="n">{{ cz_money(tx.tax_amount) }}</td></tr>
 {% endfor %}
-<tr><td></td><td class="k">TOTAL TAXES (PKR)</td><td class="n">{{ cz_money(doc.total_taxes_and_charges) }}</td></tr>
+<tr><td></td><td class="k">Total Tax</td><td class="n">{{ cz_money(doc.total_taxes_and_charges) }}</td></tr>
 {% endif %}
-<tr class="g"><td></td><td class="k">{{ grand_label or "GRAND TOTAL (PKR)" }}</td><td class="n">{{ cz_money(doc.grand_total) }}</td></tr>
+{% if doc.docstatus == 1 and (doc.paid_amount or doc.outstanding_amount) %}
+<tr><td></td><td class="k">Amount Paid</td><td class="n">{{ cz_money(doc.paid_amount) }}</td></tr>
+<tr><td></td><td class="k">Balance Due</td><td class="n">{{ cz_money(doc.outstanding_amount) }}</td></tr>
+{% endif %}
+<tr class="grand"><td></td><td class="k">{{ grand_label or "GRAND TOTAL" }} ({{ doc.currency or "PKR" }})</td><td class="n">{{ cz_money(doc.grand_total) }}</td></tr>
 </table>
-{% if doc.in_words %}<div class="cz-note">Amount in words: {{ doc.in_words }}</div>{% endif %}
+{% if doc.in_words %}<div class="cz-inv-words"><b>Amount in words:</b> {{ doc.in_words }}</div>{% endif %}

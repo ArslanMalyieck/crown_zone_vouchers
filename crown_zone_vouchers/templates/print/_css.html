@@ -48,6 +48,86 @@
 .cz-invt tr.g td{border-top:2px solid #C9A03F;font-size:10pt;font-weight:bold;color:#0B2A55;padding-top:4px}
 .cz-note{font-size:7pt;color:#5A6781;margin-top:8px}
 
+/* ---- premium invoice system ---- */
+.cz-inv{font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:8.2pt;color:#172033;line-height:1.4}
+.cz-inv .czp{height:252mm}
+.cz-inv-top{width:100%;border-collapse:collapse;background:#0A2540;color:#fff}
+.cz-inv-top td{padding:10px 12px;vertical-align:top}
+.cz-inv-brand{width:63%}
+.cz-inv-brand:after{content:"";display:block;clear:both}
+.cz-inv-logo{float:left;max-height:56px;max-width:112px;margin:0 10px 0 0;background:#fff;padding:3px;border-radius:3px}
+.cz-inv-brand-name{font-size:14.5pt;font-weight:700;letter-spacing:.35px;color:#fff}
+.cz-inv-brand-tag{font-size:8.2pt;color:#E8C96A;font-style:italic;margin-top:2px}
+.cz-inv-brand-line{width:42px;height:2px;background:#C9A03F;margin:6px 0 5px}
+.cz-inv-brand-meta{font-size:7.2pt;color:#D7E2F0;line-height:1.45}
+.cz-inv-id{width:37%;border-left:1px solid #315173;text-align:right}
+.cz-inv-doc-type{font-size:17pt;font-weight:700;color:#fff;letter-spacing:.6px;line-height:1.1}
+.cz-inv-id-grid{margin-top:6px}
+.cz-inv-id-grid table{width:100%;border-collapse:collapse}
+.cz-inv-id-grid td{padding:1px 0 !important;font-size:7.6pt;color:#D7E2F0;border:0}
+.cz-inv-id-grid td:first-child{text-align:left;color:#9FB5CC}
+.cz-inv-id-grid td:last-child{text-align:right;color:#fff}
+.cz-inv-id-foot{font-size:7.2pt;color:#9FB5CC;margin-top:5px}
+.cz-inv-status{display:inline-block;padding:2px 7px;background:#C9A03F;color:#0A2540;font-weight:700;font-size:7pt;border-radius:2px;text-transform:uppercase}
+.cz-inv-rule{height:3px;background:#C9A03F;margin:0 0 7px}
+.cz-inv-bill{width:100%;border-collapse:collapse;margin:0 0 7px;page-break-inside:avoid}
+.cz-inv-bill td{width:50%;vertical-align:top;border:1px solid #D6DEE8;padding:7px 9px !important;background:#F7F9FC}
+.cz-inv-bill-customer{border-left:3px solid #0A2540 !important}
+.cz-inv-bill-ref{border-left:3px solid #C9A03F !important}
+.cz-inv-kicker{font-size:6.8pt;letter-spacing:1.2px;font-weight:700;color:#7B8DA5;margin-bottom:2px}
+.cz-inv-customer-name{font-size:10.5pt;font-weight:700;color:#0A2540;margin-bottom:2px}
+.cz-inv-small{font-size:7.4pt;color:#42546B;line-height:1.45}
+.cz-inv-mini{width:100%;border-collapse:collapse}
+.cz-inv-mini td{padding:1px 0 !important;border:0;background:transparent;font-size:7.4pt}
+.cz-inv-mini td:first-child{color:#7B8DA5;width:42%}
+.cz-inv-mini td:last-child{text-align:right;color:#172033}
+.cz-inv-facts{width:100%;border-collapse:collapse;margin:0 0 7px;page-break-inside:avoid}
+.cz-inv-facts td{border:1px solid #D6DEE8;background:#fff;padding:6px 8px !important;vertical-align:top;width:25%}
+.cz-inv-facts td:first-child{border-left:3px solid #C9A03F}
+.cz-inv-fact-label{font-size:6.5pt;letter-spacing:.8px;color:#7B8DA5;font-weight:700;text-transform:uppercase}
+.cz-inv-fact-value{font-size:8pt;font-weight:600;color:#0A2540;margin-top:2px;min-height:11px;word-wrap:break-word}
+.cz-inv-sec{background:#0A2540;color:#fff;font-size:7.5pt;font-weight:700;letter-spacing:1px;padding:4px 8px !important;margin:5px 0 0}
+.cz-inv-sec:after{content:"";display:block;height:2px;background:#C9A03F;margin:4px -8px -4px}
+.cz-inv-tbl{width:100%;border-collapse:collapse;margin:0;page-break-inside:auto}
+.cz-inv-tbl th{background:#E9EEF5;color:#0A2540;font-size:6.9pt;letter-spacing:.4px;text-transform:uppercase;border:1px solid #D6DEE8;padding:4px 5px !important;text-align:left}
+.cz-inv-tbl td{border:1px solid #E1E7EF;padding:3px 5px !important;font-size:7.6pt;vertical-align:top;word-wrap:break-word}
+.cz-inv-tbl tbody tr:nth-child(even) td{background:#FAFBFD}
+.cz-inv-tbl .r{text-align:right}
+.cz-inv-tbl .c{text-align:center}
+.cz-inv-tbl thead{display:table-header-group}
+.cz-inv-tbl tr{page-break-inside:avoid}
+.cz-inv-totals{width:58%;margin-left:42%;border-collapse:collapse;margin-top:7px;page-break-inside:avoid}
+.cz-inv-totals td{border:0;padding:3px 7px !important;font-size:8pt}
+.cz-inv-totals td.k{text-align:right;color:#42546B}
+.cz-inv-totals td.n{text-align:right;width:34%;font-weight:600;color:#172033}
+.cz-inv-totals tr.sub td{border-top:1px solid #D6DEE8}
+.cz-inv-totals tr.tax td{color:#42546B}
+.cz-inv-totals tr.grand td{background:#0A2540;color:#fff;font-size:10pt;font-weight:700;border-top:2px solid #C9A03F;padding:6px 7px !important}
+.cz-inv-totals tr.grand td.k{color:#E8C96A;text-align:right}
+.cz-inv-totals tr.grand td.n{color:#fff}
+.cz-inv-words{border:1px solid #D6DEE8;border-left:3px solid #C9A03F;background:#F7F9FC;padding:5px 8px !important;font-size:7.3pt;color:#42546B;margin-top:6px;page-break-inside:avoid}
+.cz-inv-payment{width:100%;border-collapse:collapse;margin-top:7px;page-break-inside:avoid}
+.cz-inv-payment td{width:50%;vertical-align:top;border:1px solid #E1E7EF;padding:6px 8px !important;font-size:7.2pt;color:#42546B;line-height:1.5}
+.cz-inv-payment .h{font-size:6.8pt;letter-spacing:1px;color:#0A2540;font-weight:700;margin-bottom:3px}
+.cz-inv-terms{font-size:6.6pt;color:#5A6781;line-height:1.4}
+.cz-inv-terms b{color:#0A2540}
+.cz-inv-sign{width:100%;border-collapse:collapse;margin-top:12px;page-break-inside:avoid}
+.cz-inv-sign td{width:50%;border-top:1px solid #0A2540;padding:5px 8px 0 !important;font-size:7pt;color:#42546B;vertical-align:bottom;height:42px}
+.cz-inv-sign td:last-child{text-align:right}
+.cz-inv-footer{border-top:1px solid #D6DEE8;margin-top:7px;padding-top:4px !important;font-size:6.5pt;color:#7B8DA5;text-align:center}
+.cz-inv .czp-foot{height:1px;vertical-align:bottom}
+.cz-inv .czp>tbody>tr>td{padding:0 !important}
+.cz-inv .czp-main{height:100%}
+.cz-inv-note{font-size:7pt;color:#5A6781;margin-top:4px}
+.cz-inv .cz-sec{background:#0A2540}
+.cz-inv .cz-tbl th{background:#E9EEF5;color:#0A2540}
+.cz-inv .cz-tbl td{border-color:#E1E7EF}
+.cz-inv .cz-invt td{font-size:8pt}
+.cz-inv .cz-invt tr.g td{background:#0A2540;color:#fff;border-top:2px solid #C9A03F}
+.cz-inv .cz-invt tr.g td.k{color:#E8C96A}
+.cz-inv .cz-sign td{border-color:#D6DEE8}
+.cz-inv .cz-sign td.l{background:#F7F9FC;color:#0A2540}
+
 /* ---- PDF layout / pagination ---- */
 .cz table{page-break-inside:auto}
 .cz tr{page-break-inside:avoid}

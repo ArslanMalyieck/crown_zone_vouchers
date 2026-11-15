@@ -23,6 +23,26 @@ function cz_roles_ok() {
 	return r.includes("Travel Accounts") || r.includes("Travel Manager") || r.includes("System Manager");
 }
 
+function cz_service_filter(frm) {
+	if (!frm || !frm.set_query) return;
+	const roles = frappe.user_roles || [];
+	const restricted = !roles.includes("Travel Manager") && !roles.includes("System Manager")
+		&& !roles.includes("Travel Accounts")
+		&& (roles.includes("Booking Voucher User") || roles.includes("Travel Sales"));
+	if (!restricted) {
+		frm.set_query("service_type", () => ({}));
+		return;
+	}
+	frappe.db.get_list("Booking Service Assignment", {
+		filters: { parent: frappe.session.user, enabled: 1 },
+		fields: ["service_type"],
+		limit: 0,
+	}).then((rows) => {
+		const names = (rows || []).map((r) => r.service_type).filter(Boolean);
+		frm.set_query("service_type", () => ({ filters: { name: ["in", names.length ? names : ["__none__"]] } }));
+	});
+}
+
 function cz_hold(frm, hold) {
 	frappe.call({
 		method: "crown_zone_vouchers.api.set_hold",
@@ -71,7 +91,9 @@ function cz_nights(a, b) {
 frappe.ui.form.on("Sales Order", {
 	refresh(frm) {
 		cz_item_columns(frm, frm.doc.service_type);
-		if (frm.doc.docstatus === 1 && cz_roles_ok() && frm.doc.service_type) {
+		cz_service_filter(frm);
+		if (frm.doc.docstatus === 1 && cz_roles_ok() && frm.doc.service_type
+			&& (!frm.doc.workflow_state || frm.doc.workflow_state === "Approved")) {
 			const st = frm.doc.cz_invoice_status;
 			if (["Pending", "Void"].includes(st)) {
 				frm.add_custom_button(__("Create Invoice"), () =>

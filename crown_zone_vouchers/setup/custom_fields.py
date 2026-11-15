@@ -192,6 +192,11 @@ def sales_order_fields():
     b.col()
     b.add("cz_posted_by", "Posted By", "Link", "User", read_only=1, no_copy=1)
     b.add("cz_posted_on", "Posted On", "Datetime", read_only=1, no_copy=1)
+    b.col()
+    b.add("cz_approved_by", "Approved By", "Link", "User", read_only=1, no_copy=1, allow_on_submit=1)
+    b.add("cz_approved_on", "Approved On", "Datetime", read_only=1, no_copy=1, allow_on_submit=1)
+    b.add("cz_approval_remarks", "Approval / Rejection Remarks", "Small Text", allow_on_submit=1,
+          description="Required when Accounts rejects a voucher; recorded with the approval decision.")
     b.sec("Invoice Status (Accounts)")
     b.add("cz_invoice_status", "Invoice Status", "Select",
           "\nPending\nDraft\nIssued\nVoid\nOn Hold\nCancelled",
@@ -237,12 +242,27 @@ def sales_invoice_fields():
     return b.fields
 
 
+def user_fields():
+    return [
+        {
+            "fieldname": "custom_booking_service_types",
+            "fieldtype": "Table",
+            "label": "Booking Service Types",
+            "options": "Booking Service Assignment",
+            "insert_after": "roles",
+            "no_copy": 1,
+            "description": "Booking Voucher Users can create vouchers only for these service types. Leave blank to deny booking access.",
+        }
+    ]
+
+
 def get_custom_fields():
     return {
         "Sales Order": sales_order_fields(),
         "Sales Order Item": item_fields(),
         "Sales Invoice": sales_invoice_fields(),
         "Sales Invoice Item": item_fields(),
+        "User": user_fields(),
     }
 
 

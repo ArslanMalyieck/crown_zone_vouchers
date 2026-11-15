@@ -1,27 +1,49 @@
 {% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
 {% include "crown_zone_vouchers/templates/print/_css.html" %}
 {% set v = cz_voucher(doc) %}
-{{ m.frame_open(doc.items|length + 8) }}
-{{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc) }}
-<div class="cz-bill">BILL TO: {{ doc.customer_name }}{% if doc.tax_id %} &nbsp;|&nbsp; NTN/CNIC: {{ doc.tax_id }}{% endif %} &nbsp;|&nbsp; Voucher Ref: {{ doc.cz_travel_voucher or "" }} &nbsp;|&nbsp; Currency: PKR</div>
-
-{% if doc.cz_service_type == "Visa" %}
-<div class="cz-info">Visa: {{ v.cz_visa_type or "" }} &bull; Applicants: {{ (v.cz_travellers or []) | length }} &bull; Destination: {{ v.cz_destination_country or "" }}</div>
-{% elif doc.cz_service_type in ("Umrah", "Hajj") %}
-<div class="cz-info">Package: {{ v.cz_package_name or "" }} &bull; Pilgrims: {{ (v.cz_travellers or []) | length }} &bull; Dates: {{ cz_date(v.cz_travel_date) }} to {{ cz_date(v.cz_return_date) }}</div>
-{% elif doc.cz_service_type == "Tour" %}
-<div class="cz-info">Tour: {{ v.cz_tour_name or "" }} &bull; Date: {{ cz_date(v.cz_tour_date) }} &bull; Guests: {{ (v.cz_total_adults or 0) + (v.cz_total_children or 0) }}</div>
-{% elif doc.cz_service_type == "Transport" %}
-<div class="cz-info">Service: {{ v.cz_transport_service or "" }}</div>
+{% set service = doc.cz_service_type or (v.service_type if v else "") %}
+{% set facts = [] %}
+{% if service == "Visa" %}
+{% set facts = [
+ ("Visa Type", v.cz_visa_type if v else ""),
+ ("Destination", v.cz_destination_country if v else ""),
+ ("Applicants", (v.cz_travellers|length) if v else ""),
+ ("Application Ref.", v.cz_application_ref if v else "")
+] %}
+{% elif service in ("Umrah", "Hajj") %}
+{% set facts = [
+ ("Package", v.cz_package_name if v else ""),
+ ("Pilgrims", (v.cz_travellers|length) if v else ""),
+ ("Travel Dates", (cz_date(v.cz_travel_date) ~ " to " ~ cz_date(v.cz_return_date)) if v else ""),
+ ("Group Ref.", v.cz_group_ref if v else "")
+] %}
+{% elif service == "Tour" %}
+{% set facts = [
+ ("Tour / Activity", v.cz_tour_name if v else ""),
+ ("Tour Date", cz_date(v.cz_tour_date) if v else ""),
+ ("Guests", ((v.cz_total_adults or 0) + (v.cz_total_children or 0)) if v else ""),
+ ("Pickup", v.cz_pickup_location if v else "")
+] %}
+{% else %}
+{% set facts = [
+ ("Service", v.cz_transport_service if v else ""),
+ ("Booking Ref.", v.cz_booking_reference if v else ""),
+ ("Travel Date", cz_date(v.cz_tour_date or v.cz_travel_date) if v else ""),
+ ("Lead Guest", v.cz_lead_guest if v else "")
+] %}
 {% endif %}
-
-<table class="cz-tbl"><thead><tr><th>SERVICE / DESCRIPTION</th><th class="c">QTY</th><th class="r">RATE (PKR)</th><th class="r">AMOUNT (PKR)</th></tr></thead><tbody>
+{{ m.frame_open((doc.items|length) + 14, "cz-inv") }}
+{{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc) }}
+{{ m.inv_billto(doc, v) }}
+{{ m.inv_facts(facts) }}
+<div class="cz-inv-sec">{{ svc_title or service }} SERVICES &amp; CHARGES</div>
+<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:46%">Description</th><th class="c" style="width:8%">Qty</th><th class="r" style="width:14%">Rate</th><th class="r" style="width:14%">Tax</th><th class="r" style="width:14%">Amount</th></tr></thead><tbody>
 {% for i in doc.items %}
-<tr><td>{{ (i.description or i.item_name) | striptags }}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r">{{ cz_money(i.rate) }}</td><td class="r">{{ cz_money(i.amount) }}</td></tr>
+<tr><td class="c">{{ loop.index }}</td><td>{{ (i.description or i.item_name) | striptags }}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r">{{ cz_money(i.rate) }}</td><td class="r">{% if i.tax_rate not in (None, "") %}{{ i.tax_rate }}%{% endif %}</td><td class="r">{{ cz_money(i.amount) }}</td></tr>
 {% endfor %}
-{{ m.pad([10 - (doc.items|length), 0]|max, 4) }}
+{{ m.pad([10 - (doc.items|length), 0]|max, 6) }}
 </tbody></table>
-
-{% set total_label = "Subtotal (PKR)" %}{% set grand_label = "GRAND TOTAL (PKR)" %}
+{% set total_label = "Service Subtotal" %}{% set grand_label = "GRAND TOTAL PAYABLE" %}
 {% include "crown_zone_vouchers/templates/print/_inv_totals.html" %}
+{{ m.inv_payment(doc, with_tax) }}
 {{ m.inv_frame_close() }}

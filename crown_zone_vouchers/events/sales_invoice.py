@@ -57,13 +57,22 @@ def before_validate(doc, method=None):
     _copy_item_details(doc)
 
 
+def _lock_voucher(voucher):
+    """Serialize invoice creation per voucher so two concurrent requests cannot both pass."""
+    frappe.db.sql("SELECT name FROM `tabSales Order` WHERE name = %s FOR UPDATE", (voucher,))
+
+
 def validate(doc, method=None):
     if not doc.get("cz_travel_voucher"):
         return
-    v = frappe.db.get_value("Sales Order", doc.cz_travel_voucher,
-                            ["docstatus", "cz_invoice_status"], as_dict=True)
+    fields = ["docstatus", "cz_invoice_status"]
+    if frappe.get_meta("Sales Order").has_field("workflow_state"):
+        fields.append("workflow_state")
+    v = frappe.db.get_value("Sales Order", doc.cz_travel_voucher, fields, as_dict=True)
     if not v or v.docstatus != 1:
         frappe.throw(_("Invoice can only be prepared from a Posted voucher."))
+    if v.get("workflow_state") and v.workflow_state != "Approved":
+        frappe.throw(_("Voucher must be approved by Accounts before invoicing."))
 
     is_correction = doc.get("is_return") or doc.get("is_debit_note")
     if is_correction:
@@ -74,6 +83,7 @@ def validate(doc, method=None):
     else:
         if doc.is_new() and v.cz_invoice_status == "On Hold":
             frappe.throw(_("Voucher is On Hold. Release the hold first."))
+        _lock_voucher(doc.cz_travel_voucher)
         dup = frappe.db.exists("Sales Invoice", {
             "cz_travel_voucher": doc.cz_travel_voucher, "docstatus": ["<", 2],
             "is_return": 0, "name": ["!=", doc.name or ""]})

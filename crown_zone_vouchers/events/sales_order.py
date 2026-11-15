@@ -7,6 +7,8 @@ from crown_zone_vouchers.utils import cz_sector
 DEFAULT_PREFIX = {"Airline": "ATV", "Hotel": "HTV", "Visa": "VSV", "Transport": "TRN", "Umrah": "UMH", "Hajj": "HAJ",
                   "Tour": "CZ-ACT"}
 TRAVEL_ROLES = ("Travel Manager", "System Manager")
+BOOKING_ROLES = ("Booking Voucher User", "Travel Sales")
+SERVICE_BYPASS_ROLES = ("Travel Manager", "System Manager")
 
 
 def voucher_series(service_type):
@@ -23,15 +25,80 @@ def company_currency(doc):
     return frappe.db.get_value("Company", doc.company, "default_currency") or "PKR"
 
 
+# ------------------------------------------------------------------ authorization
+def assigned_services(user=None):
+    user = user or frappe.session.user
+    if not frappe.db.exists("DocType", "Booking Service Assignment"):
+        return set()
+    return {
+        row.service_type
+        for row in frappe.get_all(
+            "Booking Service Assignment",
+            filters={"parent": user, "parenttype": "User", "enabled": 1},
+            fields=["service_type"],
+        )
+    }
+
+
+def workflow_is_active():
+    try:
+        return bool(frappe.db.exists("Workflow", {"document_type": "Sales Order", "is_active": 1}))
+    except Exception:
+        return False
+
+
+def validate_service_access(doc):
+    """Server-side entitlement for operational booking users; UI filters are not security."""
+    user = frappe.session.user
+    if user in ("Administrator", "Guest"):
+        return
+    if not frappe.db.exists("DocType", "Booking Service Assignment"):
+        return
+    roles = set(frappe.get_roles(user))
+    if roles & set(SERVICE_BYPASS_ROLES):
+        return
+    if not (roles & set(BOOKING_ROLES)):
+        return
+    service = (doc.get("service_type") or "").strip()
+    if not service:
+        frappe.throw(_("Service Type is required for a booking user."), title=_("Service not assigned"))
+    allowed = assigned_services(user)
+    if service not in allowed:
+        frappe.throw(
+            _("You are not assigned to the {0} service. Ask an administrator to update your Booking Service Types.").format(service),
+            title=_("Service not assigned"),
+        )
+
+
+def validate_workflow_post(doc):
+    """Only Accounts may turn a pending voucher into the posted (submitted) voucher."""
+    if not workflow_is_active():
+        return
+    if getattr(doc, "workflow_state", None) == "Approved":
+        return
+    if frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles():
+        return
+    frappe.throw(
+        _("This voucher must be approved by Accounts before it can be posted."),
+        title=_("Accounts approval required"),
+    )
+
+
 # ------------------------------------------------------------------ hooks
 def before_insert(doc, method=None):
     if doc.service_type:
+        validate_service_access(doc)
         doc.naming_series = voucher_series(doc.service_type)
 
 
 def before_validate(doc, method=None):
     if not doc.service_type:
         return
+    validate_service_access(doc)
+    if (workflow_is_active() and getattr(doc, "workflow_state", None) == "Rejected"
+            and not (doc.get("cz_approval_remarks") or "").strip()):
+        frappe.throw(_("Enter Approval / Rejection Remarks before rejecting a voucher."),
+                     title=_("Rejection remarks required"))
     doc.skip_delivery_note = 1
     if not doc.delivery_date:
         doc.delivery_date = doc.transaction_date or nowdate()
@@ -50,6 +117,7 @@ def before_validate(doc, method=None):
 def validate(doc, method=None):
     if not doc.service_type:
         return
+    validate_service_access(doc)
     if hasattr(doc, "calculate_taxes_and_totals"):
         doc.calculate_taxes_and_totals()
     doc.cz_sales_amount_pkr = flt(doc.base_net_total)
@@ -58,12 +126,17 @@ def validate(doc, method=None):
 
 
 def before_submit(doc, method=None):
-    """Posting: validate required data per service, lock, stamp user + time."""
+    """Posting: validate approval + service data, lock, stamp user + time."""
     if not doc.service_type:
         return
+    validate_service_access(doc)
+    validate_workflow_post(doc)
     validate_for_post(doc)
     doc.cz_posted_by = frappe.session.user
     doc.cz_posted_on = now_datetime()
+    if getattr(doc, "workflow_state", None) == "Approved" and doc.meta.has_field("cz_approved_by"):
+        doc.cz_approved_by = doc.cz_approved_by or frappe.session.user
+        doc.cz_approved_on = doc.cz_approved_on or now_datetime()
     doc.cz_invoice_status = "Pending"
 
 

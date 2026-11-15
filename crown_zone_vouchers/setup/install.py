@@ -7,7 +7,7 @@ from crown_zone_vouchers.setup import custom_fields
 from crown_zone_vouchers.setup.seed import (AIRLINE_TAX_CODES, BRAND_DEFAULTS, SERVICES, TERMS, VISA_DOCUMENTS,
                                             VOUCHER_SERIES)
 
-ROLES = ("Travel Sales", "Travel Accounts", "Travel Manager")
+ROLES = ("Booking Voucher User", "Travel Sales", "Travel Accounts", "Travel Manager")
 TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates", "print")
 INC = "crown_zone_vouchers/templates/print/"
 
@@ -37,6 +37,7 @@ def run_all(force_print=False):
         ("custom_fields", custom_fields.create),
         ("naming", sync_naming_options),
         ("permissions", setup_permissions),
+        ("workflow", create_workflow),
         ("print_formats", lambda: create_print_formats(force_print)),
         ("workspace", create_workspace),
     ]
@@ -66,23 +67,126 @@ def _grant(doctype, role, **perms):
 
 
 def setup_permissions():
-    # Sales Order = voucher
+    # Sales Order = Booking Voucher. New operational role; old Travel Sales kept for compatibility.
+    _grant("Sales Order", "Booking Voucher User", read=1, write=1, create=1, print=1, email=1, report=1, export=1)
     _grant("Sales Order", "Travel Sales", read=1, write=1, create=1, submit=1, delete=1, print=1, email=1, report=1)
-    _grant("Sales Order", "Travel Accounts", read=1, print=1, email=1, report=1, export=1)
+    # Accounts can approve/reject the workflow and submit the approved voucher. No create/edit of drafts.
+    _grant("Sales Order", "Travel Accounts", read=1, write=1, submit=1, print=1, email=1, report=1, export=1)
     _grant("Sales Order", "Travel Manager", read=1, write=1, create=1, submit=1, cancel=1, delete=1, amend=1,
            print=1, email=1, report=1, export=1)
-    # Sales Invoice = manual invoice (Sales has NO access)
+    # Sales Invoice = manual invoice from an approved posted voucher (Booking Voucher User has NO access)
     _grant("Sales Invoice", "Travel Accounts", read=1, write=1, create=1, submit=1, print=1, email=1, report=1, export=1)
     _grant("Sales Invoice", "Travel Manager", read=1, write=1, create=1, submit=1, cancel=1, delete=1, amend=1,
            print=1, email=1, report=1, export=1)
     # link targets needed by the forms
     for dt in ("Customer", "Supplier", "Item", "Currency", "Contact", "Address", "Company", "Terms and Conditions",
                "Sales Taxes and Charges Template", "Account", "Cost Center", "Price List", "Item Group", "UOM",
-               "Print Format", "Travel Service Type", "Airline Tax Code"):
+               "Print Format", "Travel Service Type", "Airline Tax Code", "Booking Service Assignment",
+               "Workflow", "Workflow State", "Workflow Action Master"):
         for role in ROLES:
             _grant(dt, role, read=1)
     _grant("Customer", "Travel Sales", create=1, write=1)
     _grant("Contact", "Travel Sales", create=1, write=1)
+    _grant("Customer", "Booking Voucher User", create=1, write=1)
+    _grant("Contact", "Booking Voucher User", create=1, write=1)
+
+
+# ------------------------------------------------------------------ approval workflow
+WORKFLOW_NAME = "Crown Voucher Approval"
+WORKFLOW_STATES = [
+    ("Draft", "0", "Booking Voucher User", ""),
+    ("Pending Accounts Approval", "0", "Travel Accounts", "Warning"),
+    ("Approved", "1", "Travel Manager", "Success"),
+    ("Rejected", "0", "Booking Voucher User", "Danger"),
+]
+WORKFLOW_ACTIONS = ("Submit for Approval", "Approve & Post", "Reject", "Return to Draft")
+WORKFLOW_TRANSITIONS = [
+    ("Draft", "Submit for Approval", "Pending Accounts Approval", "Booking Voucher User", 1),
+    ("Draft", "Submit for Approval", "Pending Accounts Approval", "Travel Sales", 1),
+    ("Draft", "Submit for Approval", "Pending Accounts Approval", "Travel Manager", 1),
+    ("Pending Accounts Approval", "Approve & Post", "Approved", "Travel Accounts", 0),
+    ("Pending Accounts Approval", "Approve & Post", "Approved", "Travel Manager", 0),
+    ("Pending Accounts Approval", "Reject", "Rejected", "Travel Accounts", 0),
+    ("Pending Accounts Approval", "Reject", "Rejected", "Travel Manager", 0),
+    ("Rejected", "Return to Draft", "Draft", "Booking Voucher User", 1),
+    ("Rejected", "Return to Draft", "Draft", "Travel Sales", 1),
+    ("Rejected", "Return to Draft", "Draft", "Travel Manager", 1),
+]
+
+
+def _ensure_workflow_state(state, style=""):
+    if not frappe.db.exists("Workflow State", state):
+        frappe.get_doc({
+            "doctype": "Workflow State",
+            "workflow_state_name": state,
+            "style": style,
+        }).insert(ignore_permissions=True)
+
+
+def _ensure_workflow_action(action):
+    if not frappe.db.exists("Workflow Action Master", action):
+        frappe.get_doc({"doctype": "Workflow Action Master", "action_name": action}).insert(ignore_permissions=True)
+
+
+def create_workflow():
+    for state, _, _, style in WORKFLOW_STATES:
+        _ensure_workflow_state(state, style)
+    for action in WORKFLOW_ACTIONS:
+        _ensure_workflow_action(action)
+
+    if frappe.db.exists("Workflow", WORKFLOW_NAME):
+        wf = frappe.get_doc("Workflow", WORKFLOW_NAME)
+        wf.states = []
+        wf.transitions = []
+    else:
+        wf = frappe.new_doc("Workflow")
+
+    wf.update({
+        "workflow_name": WORKFLOW_NAME,
+        "document_type": "Sales Order",
+        "is_active": 1,
+        "override_status": 1,
+        "send_email_alert": 0,
+        "workflow_state_field": "workflow_state",
+    })
+    for state, doc_status, allow_edit, _style in WORKFLOW_STATES:
+        wf.append("states", {
+            "state": state,
+            "doc_status": doc_status,
+            "allow_edit": allow_edit,
+            "send_email": 0,
+        })
+    for state, action, next_state, allowed, self_approval in WORKFLOW_TRANSITIONS:
+        wf.append("transitions", {
+            "state": state,
+            "action": action,
+            "next_state": next_state,
+            "allowed": allowed,
+            "allow_self_approval": self_approval,
+            "send_email_to_creator": 0,
+        })
+    if wf.is_new():
+        wf.insert(ignore_permissions=True)
+    else:
+        wf.save(ignore_permissions=True)
+
+    field = frappe.db.get_value("Custom Field", {"dt": "Sales Order", "fieldname": "workflow_state"}, "name")
+    if field:
+        from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+        create_custom_fields({"Sales Order": [{
+            "fieldname": "workflow_state",
+            "fieldtype": "Link",
+            "label": "Approval Status",
+            "options": "Workflow State",
+            "insert_after": "cz_approval_remarks",
+            "hidden": 0,
+            "read_only": 1,
+            "no_copy": 1,
+            "allow_on_submit": 1,
+            "in_standard_filter": 1,
+            "in_list_view": 0,
+        }]}, update=True)
+    frappe.clear_cache(doctype="Sales Order")
 
 
 # ------------------------------------------------------------------ masters
@@ -220,38 +324,82 @@ def create_print_formats(force=False):
 
 
 # ------------------------------------------------------------------ workspace
-def create_workspace():
-    cards = [("Invoice Pending", "Pending", "#ECAD4B"), ("Invoice On Hold", "On Hold", "#FF5858")]
-    for label, status, color in cards:
-        if not frappe.db.exists("Number Card", label):
-            frappe.get_doc({
-                "doctype": "Number Card", "label": label, "document_type": "Sales Order", "function": "Count",
-                "type": "Document Type", "is_public": 1, "show_percentage_stats": 0, "color": color,
-                "module": "Crown Zone Vouchers",
-                "filters_json": json.dumps([["Sales Order", "docstatus", "=", 1, False],
-                                            ["Sales Order", "cz_invoice_status", "=", status, False]]),
-            }).insert(ignore_permissions=True)
+def _card(label, filters, color):
+    doc = frappe.get_doc("Number Card", label) if frappe.db.exists("Number Card", label) else frappe.new_doc("Number Card")
+    doc.update({
+        "label": label,
+        "document_type": "Sales Order",
+        "function": "Count",
+        "type": "Document Type",
+        "is_public": 1,
+        "show_percentage_stats": 0,
+        "color": color,
+        "module": "Crown Zone Vouchers",
+        "filters_json": json.dumps([["Sales Order"] + list(f) for f in filters]),
+    })
+    if doc.is_new():
+        doc.insert(ignore_permissions=True)
+    else:
+        doc.save(ignore_permissions=True)
 
-    if frappe.db.exists("Workspace", "Travel Vouchers"):
-        return
-    blocks = [{"id": "h1", "type": "header", "data": {"text": '<span class="h4"><b>Travel Vouchers</b></span>', "col": 12}}]
+
+def create_workspace():
+    cards = [
+        ("Total Posted Vouchers", [["docstatus", "=", 1, False]], "#2490EF"),
+        ("Draft Vouchers", [["docstatus", "=", 0, False], ["workflow_state", "=", "Draft", False]], "#8D99AE"),
+        ("Pending Accounts Approval", [["docstatus", "=", 0, False],
+                                        ["workflow_state", "=", "Pending Accounts Approval", False]], "#ECAD4B"),
+        ("Approved Vouchers", [["docstatus", "=", 1, False], ["workflow_state", "=", "Approved", False]], "#28A745"),
+        ("Invoice Pending", [["docstatus", "=", 1, False], ["cz_invoice_status", "=", "Pending", False]], "#F0AD4E"),
+        ("Invoiced Vouchers", [["docstatus", "=", 1, False], ["cz_invoice_status", "=", "Issued", False]], "#6F42C1"),
+        ("On Hold", [["docstatus", "=", 1, False], ["cz_invoice_status", "=", "On Hold", False]], "#FF5858"),
+        ("Rejected Vouchers", [["docstatus", "=", 0, False], ["workflow_state", "=", "Rejected", False]], "#DC3545"),
+        ("Cancelled Vouchers", [["docstatus", "=", 2, False]], "#6C757D"),
+        ("Void Invoices", [["docstatus", "=", 1, False], ["cz_invoice_status", "=", "Void", False]], "#A9A9A9"),
+    ]
+    for label, filters, color in cards:
+        _card(label, filters, color)
+
+    blocks = [
+        {"id": "h1", "type": "header", "data": {"text": '<span class="h4"><b>Travel Vouchers — Operations</b></span>', "col": 12}},
+        {"id": "p1", "type": "paragraph", "data": {"text": "Approval, posting and invoice-pending control for all seven travel services.", "col": 12}},
+    ]
+    for idx, (label, _filters, _color) in enumerate(cards):
+        blocks.append({"id": "n_%s" % idx, "type": "number_card", "data": {"number_card_name": label, "col": 3}})
+
     shortcuts = []
-    for c in cards:
-        blocks.append({"id": "n_" + c[1].replace(" ", ""), "type": "number_card", "data": {"number_card_name": c[0], "col": 4}})
     blocks.append({"id": "h2", "type": "header", "data": {"text": '<span class="h5"><b>New Voucher</b></span>', "col": 12}})
     for name, *_ in SERVICES:
         label = "New %s Voucher" % name
         shortcuts.append({"label": label, "type": "URL", "url": "/app/sales-order/new?service_type=%s" % name})
         blocks.append({"id": "s_" + name, "type": "shortcut", "data": {"shortcut_name": label, "col": 3}})
-    blocks.append({"id": "h3", "type": "header", "data": {"text": '<span class="h5"><b>Accounts</b></span>', "col": 12}})
-    for label, url in (("Posted Voucher Queue", "/app/query-report/Posted Voucher Queue"),
-                       ("All Vouchers", "/app/sales-order"), ("Invoices", "/app/sales-invoice")):
+
+    blocks.append({"id": "h3", "type": "header", "data": {"text": '<span class="h5"><b>Accounts &amp; Analysis</b></span>', "col": 12}})
+    report_links = (
+        ("Invoice Pending Vouchers", "/app/query-report/Travel Voucher Invoice Pending"),
+        ("Pending Approval Queue", "/app/sales-order?workflow_state=Pending%20Accounts%20Approval"),
+        ("Posted Voucher Queue", "/app/query-report/Posted Voucher Queue"),
+        ("All Vouchers", "/app/sales-order"),
+        ("Invoices", "/app/sales-invoice"),
+    )
+    for label, url in report_links:
         shortcuts.append({"label": label, "type": "URL", "url": url})
         blocks.append({"id": "a_" + label.replace(" ", ""), "type": "shortcut", "data": {"shortcut_name": label, "col": 3}})
 
-    frappe.get_doc({
-        "doctype": "Workspace", "name": "Travel Vouchers", "label": "Travel Vouchers", "title": "Travel Vouchers",
-        "module": "Crown Zone Vouchers", "public": 1, "content": json.dumps(blocks),
-        "number_cards": [{"number_card_name": c[0], "label": c[0]} for c in cards],
-        "shortcuts": shortcuts,
-    }).insert(ignore_permissions=True)
+    if frappe.db.exists("Workspace", "Travel Vouchers"):
+        ws = frappe.get_doc("Workspace", "Travel Vouchers")
+    else:
+        ws = frappe.new_doc("Workspace")
+        ws.update({"name": "Travel Vouchers", "label": "Travel Vouchers", "title": "Travel Vouchers",
+                   "module": "Crown Zone Vouchers", "public": 1})
+    ws.set("number_cards", [])
+    ws.set("shortcuts", [])
+    ws.content = json.dumps(blocks)
+    for label, _filters, _color in cards:
+        ws.append("number_cards", {"number_card_name": label, "label": label})
+    for shortcut in shortcuts:
+        ws.append("shortcuts", shortcut)
+    if ws.is_new():
+        ws.insert(ignore_permissions=True)
+    else:
+        ws.save(ignore_permissions=True)
