@@ -52,8 +52,9 @@ def _copy_item_details(doc):
             continue
         for fieldname in copy_fields:
             value = source.get(fieldname)
-            if value is not None and value != "":
-                setattr(item, fieldname, value)
+            if value is None or value == "" or (isinstance(value, (int, float)) and not value):
+                continue
+            setattr(item, fieldname, value)
         if item.get("supplier") and "supplier_name" in invoice_fields:
             item.supplier_name = frappe.db.get_value("Supplier", item.supplier, "supplier_name")
 
