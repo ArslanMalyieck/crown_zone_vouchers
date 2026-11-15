@@ -2,32 +2,29 @@
 {% include "crown_zone_vouchers/templates/print/_css.html" %}
 {% set v = cz_voucher(doc) %}
 {% set tickets = doc.items or [] %}
-{% set first = tickets[0] if tickets else None %}
-{{ m.frame_open(tickets|length + 14, "cz-inv") }}
+{% set segments = v.cz_flight_segments if v and v.cz_flight_segments else [] %}
+{% set segment = segments[0] if segments else None %}
+{% set ticket_info = v.cz_air_tickets[0] if v and v.cz_air_tickets else None %}
+{% set ticket_airline = ticket_info.airline if ticket_info else "" %}
+{{ m.frame_open((tickets|length) + 12, "cz-inv") }}
 {{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc) }}
 {{ m.inv_billto(doc, v, with_tax) }}
-{{ m.inv_facts([
- ("Passenger", first.cz_passenger if first else doc.customer_name),
- ("Airline", first.cz_airline if first else ""),
- ("Ticket No.", first.cz_ticket_no if first else ""),
- ("Sector", first.cz_sector if first else "")
-]) }}
+<table class="cz-inv-refs"><tr>
+<td><span>Airline</span><b>{{ ticket_airline or (tickets[0].get("cz_airline") if tickets else "") or "—" }}</b></td>
+<td><span>PNR</span><b>{{ (ticket_info.pnr if ticket_info else "") or "—" }}</b></td>
+<td><span>Booking Ref.</span><b>{{ (v.cz_booking_reference if v else "") or "—" }}</b></td>
+<td><span>Customer Ref.</span><b>{{ doc.po_no or "—" }}</b></td>
+</tr></table>
 <div class="cz-inv-sec">AIRLINE TICKET DETAILS</div>
-<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:22%">Passenger</th><th style="width:17%">Ticket No.</th><th style="width:13%">Airline</th><th style="width:14%">Sector</th><th style="width:13%">Travel Date</th><th class="r" style="width:17%">Amount ({{ doc.currency or "PKR" }})</th></tr></thead><tbody>
+<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:20%">Passenger Name</th><th style="width:16%">Ticket No.</th><th style="width:10%">Flight</th><th style="width:7%">CL</th><th style="width:11%">Dep Date</th><th style="width:13%">Sector</th><th class="r" style="width:9%">Fare</th><th class="r" style="width:10%">Amount</th></tr></thead><tbody>
 {% for i in tickets %}
-<tr><td class="c">{{ loop.index }}</td><td>{{ i.cz_passenger or (i.description or i.item_name) | striptags }}</td><td>{{ i.cz_ticket_no or "" }}</td><td>{{ i.cz_airline or "" }}</td><td>{{ i.cz_sector or "" }}</td><td>{{ cz_date(i.cz_travel_date) }}</td><td class="r">{{ cz_money(i.amount) }}</td></tr>
+{% set dep_date = i.get("cz_travel_date") or (segment.travel_date if segment else "") %}
+{% set sector = i.get("cz_sector") or (cz_sector(v) if v else "") %}
+<tr><td class="c">{{ loop.index }}</td><td>{{ i.get("cz_passenger") or (i.description or i.item_name) | striptags }}</td><td>{{ i.get("cz_ticket_no") or i.get("ticket_no") or "" }}</td><td>{{ segment.flight_no if segment else "" }}</td><td class="c">{{ segment.cabin_class if segment else "" }}</td><td>{{ cz_date(dep_date) }}</td><td>{{ sector }}</td><td class="r">{{ cz_money(i.get("net_amount") or i.get("amount")) }}</td><td class="r">{{ cz_money(i.get("amount")) }}</td></tr>
 {% endfor %}
-{{ m.pad([4 - (tickets|length), 0]|max, 7) }}
+{{ m.pad([10 - (tickets|length), 0]|max, 9) }}
 </tbody></table>
-{% if v and v.cz_flight_segments %}
-<div class="cz-inv-sec" style="margin-top:6px">FLIGHT ITINERARY</div>
-<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th>From</th><th>To</th><th>Flight</th><th>Class</th><th>Travel Date</th><th>Departure</th><th>Arrival</th></tr></thead><tbody>
-{% for s in v.cz_flight_segments %}
-<tr><td class="c">{{ loop.index }}</td><td>{{ s.sector_from or "" }}</td><td>{{ s.sector_to or "" }}</td><td>{{ s.flight_no or "" }}</td><td>{{ s.cabin_class or "" }}</td><td>{{ cz_date(s.travel_date) }}</td><td>{{ cz_time(s.departure_time) }}</td><td>{{ cz_time(s.arrival_time) }}</td></tr>
-{% endfor %}
-</tbody></table>
-{% endif %}
-{% set total_label = "Ticket Amount" %}{% set grand_label = "GRAND TOTAL PAYABLE" %}
+{% set total_label = "Ticket Fare" %}{% set grand_label = "GRAND TOTAL PAYABLE" %}
 {% include "crown_zone_vouchers/templates/print/_inv_totals.html" %}
 {{ m.inv_payment(doc, with_tax) }}
 {{ m.inv_frame_close() }}
