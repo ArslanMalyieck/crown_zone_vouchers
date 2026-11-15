@@ -227,18 +227,19 @@ def item_fields():
     b.add("cz_nights", "Nights", "Int", **common)
     b.add("cz_unit_rate", "Rate / Room / Night", "Currency", **common)
     b.add("cz_other_fees", "Other Fees", "Currency", **common)
-    b.add("cz_flight_no", "Flight No.", hidden=0)
-    b.add("cz_class", "Class", hidden=0)
-    # Airline ticket tax breakup lives on the item rows; the actual selling price
-    # is the standard item rate/amount. Fare is not a separate field.
-    b.add("tkt_section_break", "Air Ticket Taxes (Taxable / Non-Taxable)", "Section Break")
-    b.add("yq_total", "YQ Surcharge (Total)", "Currency", hidden=0)
-    b.add("yq_taxable", "YQ Taxable", "Currency", hidden=0)
-    b.add("yq_non_taxable", "YQ Non-Taxable", "Currency", hidden=0)
-    b.add("apt_tax", "APT - Airport Tax", "Currency", hidden=0)
-    b.add("fed_tax", "FED - Federal Excise", "Currency", hidden=0)
-    b.add("xt_tax", "XT - Other Taxes", "Currency", hidden=0)
-    b.add("cz_tax_total", "Total Airline Taxes", "Currency", read_only=1, hidden=0)
+    # Airline ticket tax breakup lives on the item rows; these are also created by
+    # the site's air_ticket customization and are made part of the app here.
+    tax_common = {"hidden": 0}
+    b.add("tkt_fare", "Fare Amount", "Currency", **tax_common)
+    b.add("yq_total", "YQ Surcharge (Total)", "Currency", **tax_common)
+    b.add("yq_taxable", "YQ Taxable", "Currency", **tax_common)
+    b.add("yq_non_taxable", "YQ Non-Taxable", "Currency", **tax_common)
+    b.add("apt_tax", "APT - Airport Tax", "Currency", **tax_common)
+    b.add("fed_tax", "FED - Federal Excise", "Currency", **tax_common)
+    b.add("xt_tax", "XT - Other Taxes", "Currency", **tax_common)
+    b.add("cz_tax_total", "Total Airline Taxes", "Currency", read_only=1, **tax_common)
+    b.add("cz_flight_no", "Flight No.", **tax_common)
+    b.add("cz_class", "Class", **tax_common)
     return b.fields
 
 
@@ -282,12 +283,3 @@ def get_custom_fields():
 
 def create():
     create_custom_fields(get_custom_fields(), update=True)
-    # Older air_ticket customizations expose a separate Fare Amount field. The
-    # invoice rate/amount is the selling price, so keep this legacy field out of
-    # the item form without deleting data.
-    for doctype in ("Sales Order Item", "Sales Invoice Item"):
-        field = frappe.db.get_value("Custom Field", {"dt": doctype, "fieldname": "tkt_fare"}, "name")
-        if field:
-            frappe.db.set_value("Custom Field", field, "hidden", 1, update_modified=False)
-    frappe.clear_cache(doctype="Sales Order Item")
-    frappe.clear_cache(doctype="Sales Invoice Item")
