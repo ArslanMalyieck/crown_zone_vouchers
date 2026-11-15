@@ -239,6 +239,8 @@ def sales_invoice_fields():
           bold=1, description="Without Tax = no tax rows allowed; With Tax = tax rows required")
     b.add("cz_correction_reason", "Correction Reason (credit / debit note)", "Small Text",
           depends_on="eval:doc.is_return || doc.is_debit_note")
+    b.add("cz_invoice_tax_breakup", "Invoice Tax Breakup (internal)", "Long Text",
+          hidden=1, read_only=1, no_copy=1, print_hide=1)
     return b.fields
 
 
