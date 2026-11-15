@@ -115,6 +115,12 @@ def cz_address(doc):
     if raw and "<" in str(raw):
         return cz_addr(raw)
     addr_name = doc.get("customer_address") or doc.get("shipping_address_name")
+    if not addr_name and doc.get("customer"):
+        addr_name = frappe.db.get_value(
+            "Dynamic Link",
+            {"link_doctype": "Customer", "link_name": doc.customer, "parenttype": "Address"},
+            "parent",
+        )
     if addr_name and frappe.db.exists("Address", addr_name):
         try:
             a = frappe.get_doc("Address", addr_name)
