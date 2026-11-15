@@ -20,7 +20,7 @@
 {% for i in tickets %}
 {% set dep_date = i.get("cz_travel_date") or (segment.travel_date if segment else "") %}
 {% set sector = i.get("cz_sector") or (cz_sector(v) if v else "") %}
-<tr><td class="c">{{ loop.index }}</td><td>{{ i.get("cz_passenger") or (i.description or i.item_name) | striptags }}</td><td>{{ i.get("cz_ticket_no") or i.get("ticket_no") or "" }}</td><td>{{ segment.flight_no if segment else "" }}</td><td class="c">{{ segment.cabin_class if segment else "" }}</td><td>{{ cz_datefmt(dep_date, "%d-%b-%y") }}</td><td>{{ sector }}</td><td class="r">{{ cz_money(i.get("net_amount") or i.get("amount")) }}</td><td class="r">{{ cz_money(i.get("amount")) }}</td></tr>
+<tr><td class="c">{{ loop.index }}</td><td>{{ i.get("cz_passenger") or (i.description or i.item_name) | striptags }}</td><td>{{ i.get("cz_ticket_no") or i.get("ticket_no") or "" }}</td><td>{{ (segment.flight_no if segment else "") or "" }}</td><td class="c">{{ (segment.cabin_class if segment else "") or "" }}</td><td>{{ cz_datefmt(dep_date, "%d-%b-%y") }}</td><td>{{ sector }}</td><td class="r">{{ cz_money(i.get("net_amount") or i.get("amount")) }}</td><td class="r">{{ cz_money(i.get("amount")) }}</td></tr>
 {% endfor %}
 {{ m.pad([10 - (tickets|length), 0]|max, 9) }}
 </tbody></table>
