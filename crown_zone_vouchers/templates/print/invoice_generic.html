@@ -39,7 +39,7 @@
 <div class="cz-inv-sec">{{ svc_title or service }} SERVICES &amp; CHARGES</div>
 <table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:46%">Description</th><th class="c" style="width:8%">Qty</th><th class="r" style="width:14%">Rate</th><th class="r" style="width:14%">Tax</th><th class="r" style="width:14%">Amount</th></tr></thead><tbody>
 {% for i in doc.items %}
-<tr><td class="c">{{ loop.index }}</td><td>{{ (i.description or i.item_name) | striptags }}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r">{{ cz_money(i.rate) }}</td><td class="r">{% if i.tax_rate not in (None, "") %}{{ i.tax_rate }}%{% endif %}</td><td class="r">{{ cz_money(i.amount) }}</td></tr>
+<tr><td class="c">{{ loop.index }}</td><td>{{ (i.description or i.item_name) | striptags }}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r">{{ cz_money(i.rate) }}</td><td class="r">{% if i.get("tax_rate") not in (None, "") %}{{ i.get("tax_rate") }}%{% endif %}</td><td class="r">{{ cz_money(i.amount) }}</td></tr>
 {% endfor %}
 {{ m.pad([10 - (doc.items|length), 0]|max, 6) }}
 </tbody></table>
