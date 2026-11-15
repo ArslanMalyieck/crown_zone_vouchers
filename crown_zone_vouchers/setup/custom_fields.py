@@ -227,6 +227,19 @@ def item_fields():
     b.add("cz_nights", "Nights", "Int", **common)
     b.add("cz_unit_rate", "Rate / Room / Night", "Currency", **common)
     b.add("cz_other_fees", "Other Fees", "Currency", **common)
+    # Airline ticket tax breakup lives on the item rows; these are also created by
+    # the site's air_ticket customization and are made part of the app here.
+    tax_common = {"hidden": 0}
+    b.add("tkt_fare", "Fare Amount", "Currency", **tax_common)
+    b.add("yq_total", "YQ Surcharge (Total)", "Currency", **tax_common)
+    b.add("yq_taxable", "YQ Taxable", "Currency", **tax_common)
+    b.add("yq_non_taxable", "YQ Non-Taxable", "Currency", **tax_common)
+    b.add("apt_tax", "APT - Airport Tax", "Currency", **tax_common)
+    b.add("fed_tax", "FED - Federal Excise", "Currency", **tax_common)
+    b.add("xt_tax", "XT - Other Taxes", "Currency", **tax_common)
+    b.add("cz_tax_total", "Total Airline Taxes", "Currency", read_only=1, **tax_common)
+    b.add("cz_flight_no", "Flight No.", **tax_common)
+    b.add("cz_class", "Class", **tax_common)
     return b.fields
 
 

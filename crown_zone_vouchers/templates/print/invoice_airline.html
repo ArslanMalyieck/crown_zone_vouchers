@@ -16,15 +16,42 @@
 <td><span>Customer Ref.</span><b>{{ doc.po_no or "—" }}</b></td>
 </tr></table>
 <div class="cz-inv-sec">AIRLINE TICKET DETAILS</div>
-<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:20%">Passenger Name</th><th style="width:16%">Ticket No.</th><th style="width:10%">Flight</th><th style="width:7%">CL</th><th style="width:11%">Dep Date</th><th style="width:13%">Sector</th><th class="r" style="width:9%">Fare</th><th class="r" style="width:10%">Amount</th></tr></thead><tbody>
+<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:18%">Passenger Name</th><th style="width:14%">Ticket No.</th><th style="width:9%">Flight</th><th style="width:5%">CL</th><th style="width:9%">Dep Date</th><th style="width:12%">Sector</th><th class="r" style="width:9%">Fare</th><th class="r" style="width:9%">Taxes</th><th class="r" style="width:11%">Amount</th></tr></thead><tbody>
 {% for i in tickets %}
 {% set dep_date = i.get("cz_travel_date") or (segment.travel_date if segment else "") %}
 {% set sector = i.get("cz_sector") or (cz_sector(v) if v else "") %}
-<tr><td class="c">{{ loop.index }}</td><td>{{ i.get("cz_passenger") or (i.description or i.item_name) | striptags }}</td><td>{{ i.get("cz_ticket_no") or i.get("ticket_no") or "" }}</td><td>{{ (segment.flight_no if segment else "") or "" }}</td><td class="c">{{ (segment.cabin_class if segment else "") or "" }}</td><td>{{ cz_datefmt(dep_date, "%d-%b-%y") }}</td><td>{{ sector }}</td><td class="r">{{ cz_money(i.get("net_amount") or i.get("amount")) }}</td><td class="r">{{ cz_money(i.get("amount")) }}</td></tr>
+{% set air_tax = (i.get("yq_total") or 0) + (i.get("apt_tax") or 0) + (i.get("fed_tax") or 0) + (i.get("xt_tax") or 0) %}
+{% set row_fare = i.get("tkt_fare") or ((i.get("amount") or 0) - air_tax if air_tax else i.get("amount")) %}
+<tr><td class="c">{{ loop.index }}</td><td>{{ i.get("cz_passenger") or (i.description or i.item_name) | striptags }}</td><td>{{ i.get("cz_ticket_no") or i.get("ticket_no") or "" }}</td><td>{{ (i.get("cz_flight_no") or (segment.flight_no if segment else "")) or "" }}</td><td class="c">{{ (i.get("cz_class") or (segment.cabin_class if segment else "")) or "" }}</td><td>{{ cz_datefmt(dep_date, "%d-%b-%y") }}</td><td>{{ sector }}</td><td class="r">{{ cz_money(row_fare) }}</td><td class="r">{{ cz_money(air_tax) }}</td><td class="r">{{ cz_money(i.get("amount")) }}</td></tr>
 {% endfor %}
-{{ m.pad([10 - (tickets|length), 0]|max, 9) }}
+{{ m.pad([10 - (tickets|length), 0]|max, 10) }}
 </tbody></table>
-{% set total_label = "Ticket Fare" %}{% set grand_label = "GRAND TOTAL PAYABLE" %}
-{% include "crown_zone_vouchers/templates/print/_inv_totals.html" %}
+{% set fare_total = tickets|sum(attribute='tkt_fare') %}
+{% set ticket_total = tickets|sum(attribute='amount') %}
+{% set yq_total = tickets|sum(attribute='yq_total') %}
+{% set yq_taxable = tickets|sum(attribute='yq_taxable') %}
+{% set yq_non_taxable = tickets|sum(attribute='yq_non_taxable') %}
+{% set apt_total = tickets|sum(attribute='apt_tax') %}
+{% set fed_total = tickets|sum(attribute='fed_tax') %}
+{% set xt_total = tickets|sum(attribute='xt_tax') %}
+{% set airline_tax_total = yq_total + apt_total + fed_total + xt_total %}
+{% if not fare_total and not airline_tax_total %}{% set fare_total = ticket_total %}{% endif %}
+<table class="cz-inv-totals">
+<tr class="sub"><td class="k">Fare Total ({{ doc.currency or "PKR" }})</td><td class="n">{{ cz_money(fare_total) }}</td></tr>
+{% if airline_tax_total %}
+<tr><td class="k">Airline Taxes</td><td class="n">{{ cz_money(airline_tax_total) }}</td></tr>
+{% endif %}
+<tr><td class="k">Ticket Total</td><td class="n">{{ cz_money(ticket_total) }}</td></tr>
+{% if with_tax %}
+{% for tx in doc.taxes %}
+<tr><td class="k">{{ tx.description }}</td><td class="n">{{ cz_money(tx.tax_amount) }}</td></tr>
+{% endfor %}
+{% endif %}
+<tr class="grand"><td class="k">NET TOTAL PAYABLE ({{ doc.currency or "PKR" }})</td><td class="n">{{ cz_money(doc.grand_total) }}</td></tr>
+</table>
+{% if airline_tax_total %}
+<div class="cz-inv-taxbreak"><b>Taxes Breakup:</b> YQ {{ cz_money(yq_total) }}{% if yq_taxable or yq_non_taxable %} (Taxable {{ cz_money(yq_taxable) }} / Non-Taxable {{ cz_money(yq_non_taxable) }}){% endif %} &nbsp;|&nbsp; APT {{ cz_money(apt_total) }} &nbsp;|&nbsp; FED {{ cz_money(fed_total) }} &nbsp;|&nbsp; XT {{ cz_money(xt_total) }}</div>
+{% endif %}
+{% if doc.in_words %}<div class="cz-inv-words"><b>Amount in words:</b> {{ doc.in_words }}</div>{% endif %}
 {{ m.inv_payment(doc, with_tax) }}
 {{ m.inv_frame_close() }}

@@ -37,7 +37,11 @@ def _copy_item_details(doc):
     order_fields = {df.fieldname for df in frappe.get_meta("Sales Order Item").fields}
     copy_fields = [f for f in ("supplier", "purchase_price", "purchase_tax_rate", "final_price",
                                "government_fee", "tax_rate", "taxed_price", "vat",
-                               "ticket_no", "cz_ticket_no", "custom_item_code")
+                               "ticket_no", "cz_ticket_no", "custom_item_code",
+                               "cz_passenger", "cz_airline", "cz_sector", "cz_travel_date",
+                               "tkt_fare", "yq_total", "yq_taxable", "yq_non_taxable",
+                               "apt_tax", "fed_tax", "xt_tax", "cz_tax_total",
+                               "cz_flight_no", "cz_class")
                    if f in invoice_fields and f in order_fields]
     for item in doc.items:
         source_name = item.get("so_detail")
