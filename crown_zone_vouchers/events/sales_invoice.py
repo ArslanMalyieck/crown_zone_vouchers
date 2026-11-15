@@ -86,6 +86,8 @@ def _restore_tax_breakup(doc):
     for row in rows:
         if isinstance(row, dict):
             doc.append("taxes", row)
+    if hasattr(doc, "calculate_taxes_and_totals"):
+        doc.calculate_taxes_and_totals()
 
 
 def before_validate(doc, method=None):
