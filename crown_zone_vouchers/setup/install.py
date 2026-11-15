@@ -125,7 +125,9 @@ def _ensure_workflow_state(state, style=""):
 
 def _ensure_workflow_action(action):
     if not frappe.db.exists("Workflow Action Master", action):
-        frappe.get_doc({"doctype": "Workflow Action Master", "action_name": action}).insert(ignore_permissions=True)
+        frappe.get_doc({"doctype": "Workflow Action Master", "workflow_action_name": action}).insert(
+            ignore_permissions=True
+        )
 
 
 def create_workflow():
