@@ -60,7 +60,9 @@ TERMS = {
 
 AIRLINE_TAX_CODES = [
     ("SP", "Service / Passenger tax"), ("SF", "Service fee"), ("YR", "Carrier surcharge YR"),
-    ("YQ", "Carrier surcharge YQ"), ("PK", "Pakistan tax"), ("PB", "Airport tax PB"),
+    ("YQ", "Carrier surcharge YQ"), ("APT", "Airport tax APT"), ("FED", "Federal excise duty FED"),
+    ("PSF", "Passenger service fee PSF"), ("SRB", "SRB sales tax"), ("RG", "Regulatory / RG"),
+    ("OTH", "Other airline tax"), ("PK", "Pakistan tax"), ("PB", "Airport tax PB"),
     ("IPTT", "IPTT"), ("TXD", "TXD"), ("OAZ", "OAZ"), ("OAB", "OAB"),
     ("KDP", "KDP"), ("KBB", "KBB"), ("GST", "GST on ticket"),
 ]
