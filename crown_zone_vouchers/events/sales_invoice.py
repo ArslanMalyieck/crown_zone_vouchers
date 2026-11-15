@@ -1,5 +1,3 @@
-import json
-
 import frappe
 from frappe import _
 
@@ -37,11 +35,7 @@ def _copy_item_details(doc):
     order_fields = {df.fieldname for df in frappe.get_meta("Sales Order Item").fields}
     copy_fields = [f for f in ("supplier", "purchase_price", "purchase_tax_rate", "final_price",
                                "government_fee", "tax_rate", "taxed_price", "vat",
-                               "ticket_no", "cz_ticket_no", "custom_item_code",
-                               "cz_passenger", "cz_airline", "cz_sector", "cz_travel_date",
-                               "tkt_fare", "yq_total", "yq_taxable", "yq_non_taxable",
-                               "apt_tax", "fed_tax", "xt_tax", "cz_tax_total",
-                               "cz_flight_no", "cz_class")
+                               "ticket_no", "cz_ticket_no", "custom_item_code")
                    if f in invoice_fields and f in order_fields]
     for item in doc.items:
         source_name = item.get("so_detail")
@@ -58,46 +52,9 @@ def _copy_item_details(doc):
             item.supplier_name = frappe.db.get_value("Supplier", item.supplier, "supplier_name")
 
 
-def _tax_breakup_payload(doc):
-    fields = (
-        "charge_type", "account_head", "description", "rate", "tax_amount",
-        "add_deduct_tax", "category", "cost_center", "included_in_print_rate",
-    )
-    return [
-        {field: row.get(field) for field in fields}
-        for row in (doc.get("taxes") or [])
-    ]
-
-
-def _capture_tax_breakup(doc):
-    """Keep Crown tax rows when another installed app rebuilds Sales Invoice taxes."""
-    if doc.get("cz_invoice_tax_type") == "With Tax":
-        doc.cz_invoice_tax_breakup = json.dumps(_tax_breakup_payload(doc)) if doc.get("taxes") else ""
-    elif doc.get("cz_invoice_tax_type") == "Without Tax":
-        doc.cz_invoice_tax_breakup = ""
-
-
-def _restore_tax_breakup(doc):
-    if doc.get("cz_invoice_tax_type") != "With Tax" or not doc.get("cz_invoice_tax_breakup"):
-        return
-    try:
-        rows = json.loads(doc.cz_invoice_tax_breakup)
-    except Exception:
-        return
-    if not isinstance(rows, list) or not rows:
-        return
-    doc.set("taxes", [])
-    for row in rows:
-        if isinstance(row, dict):
-            doc.append("taxes", row)
-    if hasattr(doc, "calculate_taxes_and_totals"):
-        doc.calculate_taxes_and_totals()
-
-
 def before_validate(doc, method=None):
     _link_voucher(doc)
     _copy_item_details(doc)
-    _capture_tax_breakup(doc)
 
 
 def _lock_voucher(voucher):
@@ -106,7 +63,6 @@ def _lock_voucher(voucher):
 
 
 def validate(doc, method=None):
-    _restore_tax_breakup(doc)
     if not doc.get("cz_travel_voucher"):
         return
     fields = ["docstatus", "cz_invoice_status"]

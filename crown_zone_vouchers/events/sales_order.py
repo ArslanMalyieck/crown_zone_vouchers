@@ -223,32 +223,12 @@ def sync_items(doc):
     if st == "Airline" and doc.cz_air_tickets:
         sector = cz_sector(doc)
         first_date = doc.cz_flight_segments[0].travel_date if doc.cz_flight_segments else None
-        first_segment = doc.cz_flight_segments[0] if doc.cz_flight_segments else None
-        tax_by_ticket = {}
-        for tax in doc.cz_air_taxes:
-            row_no = cint(tax.ticket_row_no) or 1
-            code = (tax.tax_code or "").upper()
-            tax_by_ticket.setdefault(row_no, {})
-            tax_by_ticket[row_no][code] = tax_by_ticket[row_no].get(code, 0) + flt(tax.amount)
         for t in doc.cz_air_tickets:
-            taxes = tax_by_ticket.get(t.idx, {})
-            yq = flt(taxes.get("YQ"))
-            apt = flt(taxes.get("APT"))
-            fed = flt(taxes.get("FED"))
-            xt = sum(v for code, v in taxes.items() if code not in ("YQ", "APT", "FED", "PSF", "SRB"))
-            sale = flt(t.sale_amount_pkr)
-            fare = max(sale - (yq + apt + fed + xt), 0)
-            row = dict(
-                item_code=default_item, qty=1, rate=sale,
+            rows.append(dict(
+                item_code=default_item, qty=1, rate=flt(t.sale_amount_pkr),
                 description="Airline ticket %s - %s" % (t.ticket_no or "", t.passenger_name or ""),
                 cz_passenger=t.passenger_name, cz_ticket_no=t.ticket_no, cz_airline=t.airline,
-                cz_sector=sector, cz_travel_date=first_date,
-                tkt_fare=fare, yq_total=yq, yq_taxable=yq, yq_non_taxable=0,
-                apt_tax=apt, fed_tax=fed, xt_tax=xt, cz_tax_total=yq + apt + fed + xt,
-                cz_flight_no=(first_segment.flight_no if first_segment else None),
-                cz_class=(first_segment.cabin_class if first_segment else None),
-            )
-            rows.append({k: v for k, v in row.items() if item_meta.has_field(k)})
+                cz_sector=sector, cz_travel_date=first_date))
     elif st == "Hotel" and doc.cz_hotel_stays:
         for r in doc.cz_hotel_stays:
             name = r.hotel_name or doc.cz_hotel_name
