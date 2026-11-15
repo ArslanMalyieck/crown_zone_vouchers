@@ -1,18 +1,14 @@
 <table class="cz-inv-totals">
+{% if with_tax %}
 <tr class="sub"><td class="k">{{ total_label or "Subtotal" }} ({{ doc.currency or "PKR" }})</td><td class="n">{{ cz_money(doc.net_total) }}</td></tr>
 {% if doc.discount_amount and doc.discount_amount > 0 %}
 <tr><td class="k">Discount</td><td class="n">- {{ cz_money(doc.discount_amount) }}</td></tr>
 {% endif %}
-{% if with_tax %}
 {% for tx in doc.taxes %}
 <tr class="tax"><td class="k">{{ tx.description }}{% if tx.rate and tx.charge_type != "Actual" %} ({{ tx.rate }}%){% endif %}</td><td class="n">{{ cz_money(tx.tax_amount) }}</td></tr>
 {% endfor %}
 <tr><td class="k">Total Tax</td><td class="n">{{ cz_money(doc.total_taxes_and_charges) }}</td></tr>
 {% endif %}
-{% if doc.docstatus == 1 and (doc.paid_amount or doc.outstanding_amount) %}
-<tr><td class="k">Amount Paid</td><td class="n">{{ cz_money(doc.paid_amount) }}</td></tr>
-<tr><td class="k">Balance Due</td><td class="n">{{ cz_money(doc.outstanding_amount) }}</td></tr>
-{% endif %}
-<tr class="grand"><td class="k">{{ grand_label or "GRAND TOTAL" }} ({{ doc.currency or "PKR" }})</td><td class="n">{{ cz_money(doc.grand_total) }}</td></tr>
+<tr class="grand"><td class="k">{% if with_tax %}{{ grand_label or "GRAND TOTAL" }}{% else %}TOTAL AMOUNT{% endif %} ({{ doc.currency or "PKR" }})</td><td class="n">{{ cz_money(doc.grand_total) }}</td></tr>
 </table>
 {% if doc.in_words %}<div class="cz-inv-words"><b>Amount in words:</b> {{ doc.in_words }}</div>{% endif %}

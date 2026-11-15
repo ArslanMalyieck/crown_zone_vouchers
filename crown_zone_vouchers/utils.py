@@ -5,6 +5,10 @@ import frappe
 from frappe.utils import flt, get_datetime, getdate, get_fullname
 
 
+ACCOUNTS_MOBILE = "+92 327 8447933"
+ACCOUNTS_EMAIL = "accounts1@zonetourism.ae"
+
+
 def cz_brand():
     """Company block shown on every voucher / invoice."""
     s = frappe.get_cached_doc("Travel Voucher Settings")
@@ -31,6 +35,8 @@ def cz_brand():
         website=s.website or "",
         srb=s.srb_no or "",
         logo=logo or "",
+        accounts_mobile=ACCOUNTS_MOBILE,
+        accounts_email=ACCOUNTS_EMAIL,
     )
 
 
@@ -101,6 +107,22 @@ def cz_addr(html):
     s = re.sub(r"<br\s*/?>", ", ", str(html), flags=re.I)
     s = re.sub(r"<[^>]+>", "", s)
     return re.sub(r"(,\s*)+", ", ", s).strip(" ,\n")
+
+
+def cz_address(doc):
+    """Invoice bill-to address, including a fallback to the linked Address record."""
+    raw = doc.get("address_display")
+    if raw and "<" in str(raw):
+        return cz_addr(raw)
+    addr_name = doc.get("customer_address") or doc.get("shipping_address_name")
+    if addr_name and frappe.db.exists("Address", addr_name):
+        try:
+            a = frappe.get_doc("Address", addr_name)
+            parts = [a.address_line1, a.address_line2, a.city, a.state, a.pincode, a.country]
+            return ", ".join([p for p in parts if p])
+        except Exception:
+            pass
+    return cz_addr(raw)
 
 
 def cz_user(user):

@@ -5,7 +5,7 @@
 {% set first = (v.cz_hotel_stays[0] if stays else None) if v else None %}
 {{ m.frame_open((doc.items|length) + 14, "cz-inv") }}
 {{ m.inv_header("HOTEL SALES TAX INVOICE" if with_tax else "HOTEL SALES INVOICE", doc) }}
-{{ m.inv_billto(doc, v) }}
+{{ m.inv_billto(doc, v, with_tax) }}
 {{ m.inv_facts([
  ("Hotel", v.cz_hotel_name if v else ""),
  ("City / Country", v.cz_hotel_city_country if v else ""),

@@ -49,6 +49,7 @@ jinja = {
         "crown_zone_vouchers.utils.cz_time12",
         "crown_zone_vouchers.utils.cz_time",
         "crown_zone_vouchers.utils.cz_addr",
+        "crown_zone_vouchers.utils.cz_address",
         "crown_zone_vouchers.utils.cz_rooms",
         "crown_zone_vouchers.utils.cz_stay",
         "crown_zone_vouchers.utils.cz_terms",

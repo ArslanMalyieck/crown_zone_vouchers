@@ -5,7 +5,7 @@
 {% set first = tickets[0] if tickets else None %}
 {{ m.frame_open(tickets|length + 14, "cz-inv") }}
 {{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc) }}
-{{ m.inv_billto(doc, v) }}
+{{ m.inv_billto(doc, v, with_tax) }}
 {{ m.inv_facts([
  ("Passenger", first.cz_passenger if first else doc.customer_name),
  ("Airline", first.cz_airline if first else ""),
@@ -29,6 +29,5 @@
 {% endif %}
 {% set total_label = "Ticket Amount" %}{% set grand_label = "GRAND TOTAL PAYABLE" %}
 {% include "crown_zone_vouchers/templates/print/_inv_totals.html" %}
-{% if not with_tax %}<div class="cz-inv-note">No separately itemized SRB tax. Tax classification is per the configured compliance rules.</div>{% endif %}
 {{ m.inv_payment(doc, with_tax) }}
 {{ m.inv_frame_close() }}

@@ -66,8 +66,7 @@
 <div class="cz-inv-id-grid">
 <table><tr><td>Invoice No.</td><td><b>{{ doc.name }}</b></td></tr>
 <tr><td>Invoice Date</td><td><b>{{ cz_date(doc.posting_date) }}</b></td></tr>
-<tr><td>Due Date</td><td>{{ cz_date(doc.due_date) or "On receipt" }}</td></tr>
-<tr><td>Status</td><td><span class="cz-inv-status">{{ doc.status or "Draft" }}</span></td></tr>
+<tr><td>Due Date</td><td><b>{{ cz_date(doc.due_date) or "On receipt" }}</b></td></tr>
 </table></div>
 <div class="cz-inv-id-foot">Currency: <b>{{ doc.currency or "PKR" }}</b>{% if doc.cz_travel_voucher %} &nbsp;|&nbsp; Voucher: <b>{{ doc.cz_travel_voucher }}</b>{% endif %}</div>
 </td>
@@ -75,14 +74,15 @@
 <div class="cz-inv-rule"></div>
 {% endmacro %}
 
-{% macro inv_billto(doc, v) %}
+{% macro inv_billto(doc, v, with_tax=False) %}
 <table class="cz-inv-bill"><tr>
 <td class="cz-inv-bill-customer">
 <div class="cz-inv-kicker">BILL TO</div>
 <div class="cz-inv-customer-name">{{ doc.customer_name }}</div>
-{% if doc.address_display %}<div class="cz-inv-small">{{ cz_addr(doc.address_display) }}</div>{% endif %}
+{% set customer_addr = cz_address(doc) %}
+{% if customer_addr %}<div class="cz-inv-small"><b>Address:</b> {{ customer_addr }}</div>{% endif %}
 {% if doc.contact_display or doc.contact_mobile or doc.contact_email %}<div class="cz-inv-small">{{ doc.contact_display or "" }}{% if doc.contact_mobile %} &nbsp;|&nbsp; {{ doc.contact_mobile }}{% endif %}{% if doc.contact_email %} &nbsp;|&nbsp; {{ doc.contact_email }}{% endif %}</div>{% endif %}
-{% if doc.tax_id %}<div class="cz-inv-small">NTN / CNIC: {{ doc.tax_id }}</div>{% endif %}
+{% if with_tax and doc.tax_id %}<div class="cz-inv-small">NTN / CNIC: {{ doc.tax_id }}</div>{% endif %}
 </td>
 <td class="cz-inv-bill-ref">
 <div class="cz-inv-kicker">BOOKING REFERENCE</div>
@@ -112,12 +112,11 @@
 <table class="cz-inv-payment"><tr>
 <td><div class="h">PAYMENT &amp; INQUIRIES</div>
 For payment confirmation and booking assistance, contact Accounts.<br>
-<b>{{ b.email }}</b>{% if b.mobile %} &nbsp;|&nbsp; {{ b.mobile }}{% endif %}{% if b.ptcl %}<br>PTCL: {{ b.ptcl }}{% endif %}<br>
+<b>{{ b.accounts_email }}</b> &nbsp;|&nbsp; {{ b.accounts_mobile }}<br>
 Please quote invoice <b>{{ doc.name }}</b> in all correspondence.</td>
 <td><div class="h">IMPORTANT</div>
-This is a computer-generated {{ "tax invoice" if with_tax else "invoice" }} and is valid without a physical signature.<br>
-Amounts are stated in {{ doc.currency or "PKR" }}. Any bank charges are to the customer's account unless expressly agreed in writing.</td>
+This is a computer-generated {{ "tax invoice" if with_tax else "invoice" }} and is valid without a physical signature.</td>
 </tr></table>
 {% endmacro %}
 
-{% macro inv_frame_close() %}</td></tr><tr><td class="czp-foot"><table class="cz-inv-sign"><tr><td>Customer Acceptance / Stamp</td><td>For <b>Crown Zone Tourism &amp; Travels Agency</b><br>Authorised Signatory</td></tr></table><div class="cz-inv-footer">{{ cz_brand().name }} &nbsp;|&nbsp; {{ cz_brand().email }} &nbsp;|&nbsp; {{ cz_brand().mobile }} &nbsp;|&nbsp; This document is issued against the referenced booking voucher.</div></td></tr></table></div>{% endmacro %}
+{% macro inv_frame_close() %}</td></tr><tr><td class="czp-foot"><table class="cz-inv-sign"><tr><td>Customer Acceptance</td><td>Authorised Signatory</td></tr></table><div class="cz-inv-footer">{{ cz_brand().name }} &nbsp;|&nbsp; {{ cz_brand().email }} &nbsp;|&nbsp; {{ cz_brand().mobile }}</div></td></tr></table></div>{% endmacro %}
