@@ -265,7 +265,7 @@ def ensure_item_fields():
         existing = {df.fieldname for df in frappe.get_meta(dt).fields}
         anchor = "item_name"
         fields = []
-        if dt == "Sales Order Item" and "supplier" not in existing:
+        if "supplier" not in existing:
             fields.append({"fieldname": "supplier", "label": "Supplier", "fieldtype": "Link",
                            "options": "Supplier", "insert_after": anchor})
             anchor = "supplier"
