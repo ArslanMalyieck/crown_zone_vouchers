@@ -94,8 +94,13 @@ def run():
     check("voucher shows fare/taxes", "TAXES BREAKUP" in voucher_html and "176-9000001" in voucher_html)
 
     try:
+        import re
+
         from frappe.utils.pdf import get_pdf
-        pdf = get_pdf(big_html, {"orientation": "Portrait"})
+        clean = re.sub(r"<link[^>]*print\.bundle[^>]*>", "", big_html)
+        clean = re.sub(r"<script[^>]*print\.bundle[^>]*>\s*</script>", "", clean)
+        pdf = get_pdf(clean, {"orientation": "Portrait", "load-error-handling": "ignore",
+                              "load-media-error-handling": "ignore"})
         path = os.path.join(OUT, "ticketing_invoice_big.pdf")
         with open(path, "wb") as fh:
             fh.write(pdf)
