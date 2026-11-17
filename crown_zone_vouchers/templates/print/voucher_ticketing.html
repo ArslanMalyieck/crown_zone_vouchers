@@ -1,0 +1,51 @@
+{% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
+{% include "crown_zone_vouchers/templates/print/_css.html" %}
+{% set tk = cz_ticket_rows(doc.items) %}
+{% set buckets = cz_tax_buckets(tk.tickets) %}
+{% set load = (tk.tickets|length) + (tk.charges|length) + 12 %}
+{{ m.frame_open(load) }}
+{{ m.header("AIRLINE TICKETING VOUCHER", doc) }}
+
+{{ m.sec("CUSTOMER INFORMATION") }}
+{{ m.kv([
+ ("Customer Name", doc.contact_display or doc.customer_name), ("Contact No.", doc.contact_mobile or doc.cz_contact_whatsapp),
+ ("Company Name", doc.customer_name), ("Email", doc.contact_email),
+ ("Address", cz_addr(doc.address_display)), ("Reference", doc.po_no or doc.cz_booking_reference)
+]) }}
+
+{{ m.sec("PASSENGERS & TICKETS") }}
+<table class="cz-tbl"><thead><tr><th>#</th><th>Passenger</th><th>Ticket No.</th><th>Airline</th><th>Flight</th><th>Class</th><th>Sector</th><th>Travel Date</th><th class="r">Fare</th><th class="r">Taxes</th><th class="r">Amount</th></tr></thead><tbody>
+{% for i in tk.tickets %}
+{% set r = cz_ticket_row(i) %}
+<tr><td>{{ loop.index }}</td><td>{{ i.cz_passenger or "" }}</td><td>{{ i.cz_ticket_no or "" }}</td><td>{{ i.cz_airline or "" }}</td><td>{{ i.cz_flight_no or "" }}</td><td>{{ i.cz_class or "" }}</td><td>{{ i.cz_sector or "" }}</td><td>{{ cz_date(i.cz_travel_date) }}</td><td class="r">{{ cz_money(r.fare) }}</td><td class="r">{{ cz_money(r.taxes) }}</td><td class="r">{{ cz_money(r.amount) }}</td></tr>
+{% endfor %}
+{{ m.pad([3 - (tk.tickets|length), 0]|max, 11) }}
+</tbody></table>
+
+{% if tk.charges %}
+{{ m.sec("SERVICE &amp; OTHER CHARGES") }}
+<table class="cz-tbl"><thead><tr><th>#</th><th>Description</th><th class="c">Qty</th><th class="r">Rate</th><th class="r">Amount</th></tr></thead><tbody>
+{% for i in tk.charges %}
+<tr><td>{{ loop.index }}</td><td>{{ (i.description or i.item_name) | striptags }}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r">{{ cz_money(i.final_price or i.rate) }}</td><td class="r">{{ cz_money(i.final_price or i.rate) }}</td></tr>
+{% endfor %}
+</tbody></table>
+{% endif %}
+
+{% if buckets %}
+{{ m.sec("TAXES BREAKUP") }}
+<table class="cz-tbl"><thead><tr>{% for b in buckets %}<th>{{ b.code }}</th>{% endfor %}<th class="r">Total Taxes</th></tr></thead><tbody>
+<tr>{% for b in buckets %}<td class="r">{{ cz_money(b.total) }}</td>{% endfor %}<td class="r"><b>{{ cz_money(buckets | sum(attribute="total")) }}</b></td></tr>
+</tbody></table>
+{% endif %}
+
+<table class="cz-invt" style="width:55%;margin-left:45%">
+{% if doc.taxes %}{% for tx in doc.taxes %}
+<tr class="tax"><td class="k">{{ tx.description }}</td><td class="n">{{ cz_money(tx.tax_amount) }}</td></tr>
+{% endfor %}{% endif %}
+<tr class="g"><td class="k">GRAND TOTAL ({{ doc.currency or "PKR" }})</td><td class="n">{{ cz_money(doc.grand_total) }}</td></tr>
+</table>
+{% if doc.in_words %}<div class="cz-note"><b>Amount in words:</b> {{ doc.in_words }}</div>{% endif %}
+
+<div class="cz-keep">{{ m.sec("PREPARED & POSTED DETAILS") }}
+{{ m.prepared(doc) }}</div>
+{{ m.frame_close(doc) }}

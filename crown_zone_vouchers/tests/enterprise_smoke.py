@@ -164,8 +164,6 @@ def run():
         frappe.set_user(ACCOUNTS)
         from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice
         si = make_sales_invoice(created["airline"])
-        si.cz_invoice_tax_type = "Without Tax"
-        si.taxes = []
         si.insert()
         created_invoice["name"] = si.name
         _assert(si.cz_travel_voucher == created["airline"], "voucher link missing")
@@ -180,8 +178,6 @@ def run():
         from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice
         try:
             si = make_sales_invoice(created["airline"])
-            si.cz_invoice_tax_type = "Without Tax"
-            si.taxes = []
             si.insert()
         except frappe.ValidationError as exc:
             _assert("active invoice" in str(exc).lower(), "unexpected error: %s" % exc)

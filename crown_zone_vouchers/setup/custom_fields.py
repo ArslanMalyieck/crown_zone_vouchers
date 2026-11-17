@@ -208,7 +208,7 @@ def sales_order_fields():
     return top.fields + b.fields
 
 
-ALL = ("Airline", "Hotel", "Visa", "Transport", "Umrah", "Hajj", "Tour")
+ALL = ("Airline", "Hotel", "Visa", "Transport", "Umrah", "Hajj", "Tour", "Ticketing")
 
 
 def item_fields():
@@ -230,13 +230,67 @@ def item_fields():
     return b.fields
 
 
+SHARED_ITEM_FIELDS = (
+    ("final_price", "Selling Price", "Currency", None, {}),
+    ("government_fee", "Non Taxable", "Currency", None, {}),
+    ("taxed_price", "Taxable", "Currency", None, {"read_only": 1}),
+    ("tax_rate", "Tax Rate", "Float", None, {"default": "5"}),
+    ("vat", "VAT", "Currency", None, {"read_only": 1}),
+    ("purchase_price", "Purchase Price", "Currency", None, {}),
+    ("purchase_tax_rate", "IP Tax Rate", "Select", "5\n0", {"default": "5"}),
+)
+
+CROWN_ITEM_FIELDS = (
+    ("cz_tax_rate", "GST Rate", "Select", "0\n5", {"default": "0", "in_list_view": 1}),
+    ("cz_manual", None, "Check", None, {"hidden": 1, "default": "0"}),
+    ("cz_flight_no", "Flight No.", "Data", None, {"hidden": 1}),
+    ("cz_class", "Class", "Data", None, {"hidden": 1}),
+    ("cz_tax_sp", "SP - Service / Passenger Tax", "Currency", None, {"hidden": 1}),
+    ("cz_tax_rg", "RG - Regulatory / Government", "Currency", None, {"hidden": 1}),
+    ("cz_tax_psf", "PSF - Passenger Service Fee", "Currency", None, {"hidden": 1}),
+    ("cz_tax_srb", "SRB - Sindh Revenue Board", "Currency", None, {"hidden": 1}),
+    ("cz_tax_yq", "YQ - Carrier Surcharge", "Currency", None, {"hidden": 1}),
+    ("cz_tax_other", "Other Taxes", "Currency", None, {"hidden": 1}),
+    ("cz_taxes_total", "Taxes Total", "Currency", None, {"hidden": 1, "read_only": 1}),
+)
+
+
+def ensure_item_fields():
+    """Create the item-level pricing/tax columns only where they do not exist yet.
+
+    On sites that already run the shaunglobal app these fieldnames exist and are
+    left untouched, so its reports keep working; on a clean site crown owns them.
+    """
+    for dt in ("Sales Order Item", "Sales Invoice Item"):
+        existing = {df.fieldname for df in frappe.get_meta(dt).fields}
+        anchor = "item_name"
+        fields = []
+        if dt == "Sales Order Item" and "supplier" not in existing:
+            fields.append({"fieldname": "supplier", "label": "Supplier", "fieldtype": "Link",
+                           "options": "Supplier", "insert_after": anchor})
+            anchor = "supplier"
+        for fieldname, label, fieldtype, options, kw in SHARED_ITEM_FIELDS + CROWN_ITEM_FIELDS:
+            if fieldname in existing:
+                continue
+            d = {"fieldname": fieldname, "label": label or "", "fieldtype": fieldtype,
+                 "insert_after": anchor}
+            if options:
+                d["options"] = options
+            d.update(kw)
+            fields.append(d)
+            anchor = fieldname
+        if fields:
+            create_custom_fields({dt: fields}, update=False)
+
+
 def sales_invoice_fields():
     b = _Builder("naming_series")
     b.add("cz_travel_voucher", "Travel Voucher", "Link", "Sales Order", no_copy=1, in_standard_filter=1)
     b.add("cz_service_type", "Service Type", "Link", "Travel Service Type", read_only=1, no_copy=1,
           in_standard_filter=1)
     b.add("cz_invoice_tax_type", "Invoice Type", "Select", "Without Tax\nWith Tax", default="Without Tax",
-          bold=1, description="Without Tax = no tax rows allowed; With Tax = tax rows required")
+          bold=1, read_only=1, no_copy=1,
+          description="Derived from the lines: GST rows present = With Tax")
     b.add("cz_correction_reason", "Correction Reason (credit / debit note)", "Small Text",
           depends_on="eval:doc.is_return || doc.is_debit_note")
     return b.fields
@@ -268,3 +322,4 @@ def get_custom_fields():
 
 def create():
     create_custom_fields(get_custom_fields(), update=True)
+    ensure_item_fields()

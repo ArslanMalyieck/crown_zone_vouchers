@@ -1,3 +1,4 @@
+{% set with_tax = with_tax and doc.taxes and (doc.total_taxes_and_charges|float) > 0 %}
 <table class="cz-inv-totals">
 {% if with_tax %}
 <tr class="sub"><td class="k">{{ total_label or "Subtotal" }} ({{ doc.currency or "PKR" }})</td><td class="n">{{ cz_money(doc.net_total) }}</td></tr>

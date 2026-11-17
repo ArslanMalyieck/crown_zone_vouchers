@@ -16,10 +16,14 @@
   "meal_plan",
   "bed_type",
   "extra_bed",
-  "sale_rate",
-  "other_fees",
-  "amount"
- ],
+   "sale_rate",
+   "other_fees",
+   "amount",
+   "supplier",
+   "purchase_amount",
+   "tax_rate",
+   "non_taxable"
+  ],
  "fields": [
   {
    "fieldname": "hotel_name",
@@ -123,6 +127,29 @@
    "read_only": 1,
    "in_list_view": 1,
    "columns": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "purchase_amount",
+   "fieldtype": "Currency",
+   "label": "Purchase Amount (PKR)"
+  },
+  {
+   "fieldname": "tax_rate",
+   "fieldtype": "Select",
+   "label": "GST Rate",
+   "options": "0\n5",
+   "default": "0"
+  },
+  {
+   "fieldname": "non_taxable",
+   "fieldtype": "Currency",
+   "label": "Non Taxable (PKR)"
   }
  ],
  "links": [],

@@ -34,6 +34,8 @@ def run_all(force_print=False):
     steps = [
         ("roles", create_roles),
         ("seed", seed_masters),
+        ("tax_account", ensure_tax_account),
+        ("selling_settings", ensure_selling_settings),
         ("custom_fields", custom_fields.create),
         ("naming", sync_naming_options),
         ("permissions", setup_permissions),
@@ -228,6 +230,35 @@ def seed_masters():
             doc.insert(ignore_permissions=True)
 
 
+def ensure_tax_account():
+    """GST liability account used by the item-level VAT engine (created only if absent)."""
+    from crown_zone_vouchers.events.vat import gst_account
+
+    company = frappe.defaults.get_global_default("company") or frappe.db.get_value("Company", {}, "name")
+    if not company or gst_account(company):
+        return
+    parent = (
+        frappe.db.get_value("Account", {"company": company, "is_group": 1, "name": ["like", "%Duties and Taxes%"]}, "name")
+        or frappe.db.get_value("Account", {"company": company, "is_group": 1, "root_type": "Liability"}, "name")
+    )
+    if not parent:
+        return
+    frappe.get_doc({
+        "doctype": "Account",
+        "account_name": "GST",
+        "parent_account": parent,
+        "company": company,
+        "account_type": "Tax",
+        "is_group": 0,
+    }).insert(ignore_permissions=True)
+
+
+def ensure_selling_settings():
+    """Vouchers may carry the same item twice at different rates / suppliers."""
+    if not frappe.db.get_single_value("Selling Settings", "allow_multiple_items"):
+        frappe.db.set_single_value("Selling Settings", "allow_multiple_items", 1)
+
+
 def sync_naming_options():
     """Add voucher / invoice series of every service type to the naming_series Select options."""
     from frappe.custom.doctype.property_setter.property_setter import make_property_setter
@@ -255,6 +286,7 @@ VOUCHERS = [
     ("CZ Umrah Voucher", "voucher_package.html", '{% set pkg = "Umrah" %}'),
     ("CZ Hajj Voucher", "voucher_package.html", '{% set pkg = "Hajj" %}'),
     ("CZ Tour Voucher", "voucher_tour.html", ""),
+    ("CZ Ticketing Voucher", "voucher_ticketing.html", ""),
 ]
 
 # (service, template, title)
@@ -266,6 +298,7 @@ INVOICES = [
     ("Umrah", "invoice_generic.html", "UMRAH PACKAGE"),
     ("Hajj", "invoice_generic.html", "HAJJ PACKAGE"),
     ("Tour", "invoice_generic.html", "TOUR"),
+    ("Ticketing", "invoice_ticketing.html", "TICKETING"),
 ]
 
 
@@ -290,12 +323,13 @@ def print_format_defs():
                                          ("Visa", "voucher_visa.html", ""), ("Transport", "voucher_transport.html", ""),
                                          ("Umrah", "voucher_package.html", '{% set pkg = "Umrah" %}'),
                                          ("Hajj", "voucher_package.html", '{% set pkg = "Hajj" %}'),
-                                         ("Tour", "voucher_tour.html", "")]):
+                                         ("Tour", "voucher_tour.html", ""),
+                                         ("Ticketing", "voucher_ticketing.html", "")]):
         v.append('{%% %s doc.service_type == "%s" %%}%s%s' % ("if" if i == 0 else "elif", svc, pre, _inc(tpl)))
     v.append("{% else %}<p>Select a Service Type to print this voucher.</p>{% endif %}")
     defs.append(("CZ Voucher", "Sales Order", "\n".join(v)))
 
-    s = ['{% set with_tax = (doc.cz_invoice_tax_type == "With Tax") %}']
+    s = ['{% set with_tax = (doc.taxes|length > 0 and (doc.total_taxes_and_charges|float) > 0) %}']
     for i, (svc, tpl, title) in enumerate(INVOICES):
         s.append('{%% %s doc.cz_service_type == "%s" %%}{%% set svc_title = "%s" %%}%s' % (
             "if" if i == 0 else "elif", svc, title, _inc(tpl)))

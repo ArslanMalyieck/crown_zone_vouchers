@@ -1,9 +1,16 @@
 import frappe
 from frappe import _
+from frappe.utils import flt
+
+from crown_zone_vouchers.events.vat import apply_vat
 
 ACCOUNTS_ROLES = ("Travel Accounts", "Travel Manager", "Accounts Manager", "System Manager")
 DEFAULT_INV = {"Airline": "INV-AIR", "Hotel": "INV-HTL", "Visa": "INV-VISA", "Transport": "INV-TRN",
-               "Umrah": "INV-UMH", "Hajj": "INV-HAJ", "Tour": "INV-TUR"}
+               "Umrah": "INV-UMH", "Hajj": "INV-HAJ", "Tour": "INV-TUR", "Ticketing": "INV-TKT"}
+COPY_ITEM_FIELDS = ("supplier", "purchase_price", "purchase_tax_rate", "final_price", "government_fee",
+                    "tax_rate", "taxed_price", "vat", "ticket_no", "cz_ticket_no", "custom_item_code",
+                    "cz_manual", "cz_tax_rate", "cz_flight_no", "cz_class", "cz_tax_sp", "cz_tax_rg",
+                    "cz_tax_psf", "cz_tax_srb", "cz_tax_yq", "cz_tax_other", "cz_taxes_total")
 
 
 def inv_series(service_type):
@@ -33,10 +40,7 @@ def _copy_item_details(doc):
         return
     invoice_fields = {df.fieldname for df in frappe.get_meta("Sales Invoice Item").fields}
     order_fields = {df.fieldname for df in frappe.get_meta("Sales Order Item").fields}
-    copy_fields = [f for f in ("supplier", "purchase_price", "purchase_tax_rate", "final_price",
-                               "government_fee", "tax_rate", "taxed_price", "vat",
-                               "ticket_no", "cz_ticket_no", "custom_item_code")
-                   if f in invoice_fields and f in order_fields]
+    copy_fields = [f for f in COPY_ITEM_FIELDS if f in invoice_fields and f in order_fields]
     for item in doc.items:
         source_name = item.get("so_detail")
         if not source_name:
@@ -48,7 +52,7 @@ def _copy_item_details(doc):
             value = source.get(fieldname)
             if value is not None and value != "":
                 setattr(item, fieldname, value)
-        if item.get("supplier") and "supplier_name" in invoice_fields:
+        if item.get("supplier") and "supplier_name" in invoice_fields and not item.get("supplier_name"):
             item.supplier_name = frappe.db.get_value("Supplier", item.supplier, "supplier_name")
 
 
@@ -90,10 +94,12 @@ def validate(doc, method=None):
         if dup:
             frappe.throw(_("Voucher {0} already has an active invoice {1}.").format(doc.cz_travel_voucher, dup))
 
-    if doc.cz_invoice_tax_type == "Without Tax" and doc.get("taxes"):
-        frappe.throw(_("Invoice Type is Without Tax but tax rows exist. Remove taxes or choose With Tax."))
-    if doc.cz_invoice_tax_type == "With Tax" and not doc.get("taxes"):
-        frappe.throw(_("Invoice Type is With Tax - add the applicable tax rows."))
+    if doc.get("cz_travel_voucher"):
+        for item in doc.items:
+            if not flt(item.get("final_price")):
+                item.final_price = flt(item.get("rate"))
+        apply_vat(doc, v.service_type)
+        doc.cz_invoice_tax_type = "With Tax" if (doc.get("taxes") and flt(doc.total_taxes_and_charges)) else "Without Tax"
 
 
 def refresh_invoice_status(voucher, exclude=None):

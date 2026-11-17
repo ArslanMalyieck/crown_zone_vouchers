@@ -56,5 +56,10 @@ jinja = {
         "crown_zone_vouchers.utils.cz_voucher",
         "crown_zone_vouchers.utils.cz_user",
         "crown_zone_vouchers.utils.cz_sector",
+        "crown_zone_vouchers.utils.cz_ticket_row",
+        "crown_zone_vouchers.utils.cz_ticket_rows",
+        "crown_zone_vouchers.utils.cz_chunks",
+        "crown_zone_vouchers.utils.cz_tax_buckets",
+        "crown_zone_vouchers.utils.cz_words",
     ]
 }

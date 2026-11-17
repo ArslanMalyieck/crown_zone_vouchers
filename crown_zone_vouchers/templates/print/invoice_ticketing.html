@@ -1,0 +1,130 @@
+{% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
+{% include "crown_zone_vouchers/templates/print/_css.html" %}
+{% set v = cz_voucher(doc) %}
+{% set with_tax = (doc.taxes|length > 0 and (doc.total_taxes_and_charges|float) > 0) %}
+{% set tk = cz_ticket_rows(doc.items) %}
+{% set pages = cz_chunks(tk.tickets) %}
+{% set buckets = cz_tax_buckets(tk.tickets) %}
+<style>
+.cztk-w{font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:8.2pt;color:#172033}
+.cztk-pg{margin-bottom:4px}
+.cztk-meta{width:100%;border-collapse:collapse;margin:0 0 7px;page-break-inside:avoid}
+.cztk-meta td{border:1px solid #D6DEE8;background:#F7F9FC;padding:6px 9px !important;vertical-align:top}
+.cztk-meta td.payer{border-left:3px solid #0A2540}
+.cztk-meta td.ref{border-left:3px solid #C9A03F}
+.cztk-kick{font-size:6.8pt;letter-spacing:1.2px;font-weight:700;color:#7B8DA5;margin-bottom:2px}
+.cztk-name{font-size:10.5pt;font-weight:700;color:#0A2540}
+.cztk-mini{width:100%;border-collapse:collapse}
+.cztk-mini td{padding:1px 0 !important;border:0;background:transparent;font-size:7.4pt}
+.cztk-mini td:first-child{color:#7B8DA5;width:46%}
+.cztk-mini td:last-child{text-align:right;color:#172033;font-weight:600}
+.cztk-tot td{background:#F3F6FA;font-weight:700;font-size:7.6pt;color:#0A2540}
+.cztk-brk{width:100%;border-collapse:collapse;margin-top:6px;page-break-inside:avoid}
+.cztk-brk td{border:1px solid #D6DEE8;padding:5px 7px !important;font-size:7.4pt;background:#FAFBFD;text-align:center}
+.cztk-brk .h{font-size:6.6pt;letter-spacing:.7px;color:#7B8DA5;font-weight:700;text-transform:uppercase}
+.cztk-brk .v{font-size:8.6pt;font-weight:700;color:#0A2540;margin-top:2px}
+.cztk-net{width:52% !important;margin-left:48% !important;border-collapse:collapse;margin-top:8px;page-break-inside:avoid}
+.cztk-net td{border:0;padding:3px 7px !important;font-size:8pt}
+.cztk-net td.k{text-align:right;color:#42546B;width:62%}
+.cztk-net td.n{text-align:right;font-weight:600;width:38%}
+.cztk-net tr.g td{background:#0A2540;color:#fff;font-size:10pt;font-weight:700;border-top:2px solid #C9A03F;padding:6px 7px !important}
+.cztk-net tr.g td.k{color:#E8C96A}
+.cztk-sign{width:100%;border-collapse:collapse;margin-top:14px;page-break-inside:avoid}
+.cztk-sign td{width:25%;border-top:1px solid #0A2540;padding:3px 6px 0 !important;font-size:6.8pt;color:#42546B;height:26px;vertical-align:bottom}
+.cztk-sign td:last-child{text-align:right;font-weight:600;color:#0A2540}
+.cztk-sec{background:#0A2540;color:#fff;font-size:7.5pt;font-weight:700;letter-spacing:1px;padding:4px 8px !important;margin:4px 0 0}
+.cztk-sec:after{content:"";display:block;height:2px;background:#C9A03F;margin:4px -8px -4px}
+</style>
+<div class="cz cztk-w">
+{{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc) }}
+<table class="cztk-meta"><tr>
+<td class="payer" style="width:58%">
+<div class="cztk-kick">PAYER'S NAME &amp; ADDRESS</div>
+<div class="cztk-name">{{ doc.customer_name }}</div>
+{% set addr = cz_address(doc) %}
+{% if addr %}<div class="cz-inv-small">{{ addr }}</div>{% endif %}
+{% if with_tax and doc.tax_id %}<div class="cz-inv-small">NTN / CNIC: {{ doc.tax_id }}</div>{% endif %}
+</td>
+<td class="ref" style="width:42%">
+<table class="cztk-mini">
+<tr><td>Invoice No.</td><td>{{ doc.name }}</td></tr>
+<tr><td>Invoice Date</td><td>{{ cz_date(doc.posting_date) }}</td></tr>
+<tr><td>Your Ref.</td><td>{{ doc.po_no or (v.cz_booking_reference if v else "") or "—" }}</td></tr>
+<tr><td>Voucher</td><td>{{ doc.cz_travel_voucher or "—" }}</td></tr>
+<tr><td>Currency</td><td>{{ doc.currency or "PKR" }}</td></tr>
+</table>
+</td>
+</tr></table>
+
+{% if not pages %}
+<div class="cztk-pg">
+<div class="cztk-sec">SERVICE &amp; OTHER CHARGES</div>
+<table class="cz-inv-tbl"><thead><tr><th style="width:6%">#</th><th>Description</th><th class="c" style="width:8%">Qty</th><th class="r" style="width:18%">Amount ({{ doc.currency or "PKR" }})</th></tr></thead><tbody>
+{% for i in tk.charges %}<tr><td class="c">{{ loop.index }}</td><td>{{ (i.description or i.item_name) | striptags }}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r">{{ cz_money(i.final_price or i.rate) }}</td></tr>{% endfor %}
+</tbody></table>
+</div>
+{% endif %}
+
+{% set ns = namespace(cum_fare=0, cum_tax=0, cum_amt=0) %}
+{% for chunk in pages %}
+{% set pt = namespace(fare=0, tax=0, amt=0) %}
+<div class="cztk-pg" {% if not loop.last %}style="page-break-after:always"{% endif %}>
+<div class="cztk-sec">AIRLINE TICKETS &nbsp;|&nbsp; PAGE {{ loop.index }} OF {{ pages|length }}{% if with_tax %} &nbsp;|&nbsp; SALES TAX INVOICE{% endif %}</div>
+<table class="cz-inv-tbl"><thead><tr>
+<th style="width:4%">#</th><th style="width:17%">Passenger Name</th><th style="width:13%">Ticket No.</th>
+<th style="width:9%">Flight</th><th style="width:5%">CL</th><th style="width:9%">Dep Date</th>
+<th style="width:15%">Sector</th><th class="r" style="width:9%">Fare</th><th class="r" style="width:9%">Taxes</th>
+<th class="r" style="width:10%">Amount ({{ doc.currency or "PKR" }})</th>
+</tr></thead><tbody>
+{% for i in chunk %}
+{% set r = cz_ticket_row(i) %}
+{% set pt.fare = pt.fare + r.fare %}{% set pt.tax = pt.tax + r.taxes %}{% set pt.amt = pt.amt + r.amount %}
+<tr>
+<td class="c">{{ loop.index }}</td>
+<td>{{ i.cz_passenger or "" }}</td>
+<td>{{ i.cz_ticket_no or "" }}</td>
+<td>{{ i.cz_flight_no or i.cz_airline or "" }}</td>
+<td class="c">{{ i.cz_class or "" }}</td>
+<td>{{ cz_date(i.cz_travel_date) }}</td>
+<td>{{ i.cz_sector or "" }}</td>
+<td class="r">{{ cz_money(r.fare) }}</td>
+<td class="r">{{ cz_money(r.taxes) }}</td>
+<td class="r">{{ cz_money(r.amount) }}</td>
+</tr>
+{% endfor %}
+{% set ns.cum_fare = ns.cum_fare + pt.fare %}{% set ns.cum_tax = ns.cum_tax + pt.tax %}{% set ns.cum_amt = ns.cum_amt + pt.amt %}
+<tr class="cztk-tot"><td colspan="7">Page Total</td><td class="r">{{ cz_money(pt.fare) }}</td><td class="r">{{ cz_money(pt.tax) }}</td><td class="r">{{ cz_money(pt.amt) }}</td></tr>
+<tr class="cztk-tot"><td colspan="7">Cumulative Total</td><td class="r">{{ cz_money(ns.cum_fare) }}</td><td class="r">{{ cz_money(ns.cum_tax) }}</td><td class="r">{{ cz_money(ns.cum_amt) }}</td></tr>
+</tbody></table>
+
+{% if loop.last %}
+{% if tk.charges and pages %}
+<div class="cztk-sec" style="margin-top:6px">SERVICE &amp; OTHER CHARGES</div>
+<table class="cz-inv-tbl"><thead><tr><th style="width:6%">#</th><th>Description</th><th class="c" style="width:8%">Qty</th><th class="r" style="width:18%">Amount ({{ doc.currency or "PKR" }})</th></tr></thead><tbody>
+{% for i in tk.charges %}<tr><td class="c">{{ loop.index }}</td><td>{{ (i.description or i.item_name) | striptags }}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r">{{ cz_money(i.final_price or i.rate) }}</td></tr>{% endfor %}
+</tbody></table>
+{% endif %}
+
+{% if buckets %}
+<table class="cztk-brk"><tr>
+{% for b in buckets %}<td><div class="h">{{ b.code }} — {{ b.label }}</div><div class="v">{{ cz_money(b.total) }}</div></td>{% endfor %}
+</tr></table>
+{% endif %}
+
+<table class="cztk-net">
+{% for tx in doc.taxes %}
+<tr><td class="k">{{ tx.description }}</td><td class="n">{{ cz_money(tx.tax_amount) }}</td></tr>
+{% endfor %}
+<tr><td class="k">Net Total ({{ doc.currency or "PKR" }})</td><td class="n">{{ cz_money(doc.grand_total) }}</td></tr>
+<tr class="g"><td class="k">{{ "GRAND TOTAL PAYABLE" if with_tax else "TOTAL AMOUNT" }}</td><td class="n">{{ cz_money(doc.grand_total) }}</td></tr>
+</table>
+<div class="cz-inv-words">{{ cz_words(doc.grand_total, doc.currency or "PKR") }}</div>
+
+<table class="cztk-sign"><tr>
+<td>Prepared By</td><td>Checked By</td><td>&nbsp;</td><td>For {{ cz_brand().name }}</td>
+</tr></table>
+<div class="cz-inv-footer" style="margin-top:6px">{{ cz_brand().name }} &nbsp;|&nbsp; {{ cz_brand().email }} &nbsp;|&nbsp; {{ cz_brand().mobile }}{% if cz_brand().srb %} &nbsp;|&nbsp; SRB No: {{ cz_brand().srb }}{% endif %}</div>
+{% endif %}
+</div>
+{% endfor %}
+</div>

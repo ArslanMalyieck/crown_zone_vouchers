@@ -1,6 +1,7 @@
 {% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
 {% include "crown_zone_vouchers/templates/print/_css.html" %}
 {% set v = cz_voucher(doc) %}
+{% set with_tax = (doc.taxes|length > 0 and (doc.total_taxes_and_charges|float) > 0) %}
 {% set stays = v.cz_hotel_stays if v else [] %}
 {% set first = (v.cz_hotel_stays[0] if stays else None) if v else None %}
 {{ m.frame_open((doc.items|length) + 14, "cz-inv") }}

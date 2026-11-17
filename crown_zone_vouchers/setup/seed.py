@@ -7,6 +7,7 @@ SERVICES = [
     ("Umrah", "UMH", "INV-UMH", "Umrah Package"),
     ("Hajj", "HAJ", "INV-HAJ", "Hajj Package"),
     ("Tour", "CZ-ACT", "INV-TUR", "Tour Service"),
+    ("Ticketing", "TKV", "INV-TKT", "Airline Ticket"),
 ]
 
 # optional full naming-series override per service (default is PREFIX-.YYYY.-.#####)
@@ -55,6 +56,15 @@ TERMS = {
         "Hajj visa/permit and package services are subject to official approvals.",
         "Hotels, transport, tents and meals follow confirmed operator inclusions.",
         "Cancellation and changes follow written package terms and supplier policies.",
+    ],
+    "Ticketing": [
+        "This invoice is issued subject to the airline's rules and regulations.",
+        "Airline tickets are non-refundable.",
+        "Changes, cancellations, date/time amendments and reissue are subject to airline policy and applicable charges.",
+        "Passport, visa and all travel documents must be valid as per destination country requirements.",
+        "The agency is not responsible for any schedule change, delay or cancellation by the airline.",
+        "Please reconfirm flight details directly with the airline before travel.",
+        "Any additional services (seat selection, baggage, meals, etc.) are subject to airline charges.",
     ],
 }
 

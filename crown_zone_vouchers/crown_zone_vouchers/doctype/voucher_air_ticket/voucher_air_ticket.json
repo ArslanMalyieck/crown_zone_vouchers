@@ -24,9 +24,13 @@
   "wht_percent",
   "wht_amount",
   "supplier_amount_foreign",
-  "supplier_amount_pkr",
-  "sale_amount_pkr"
- ],
+   "supplier_amount_pkr",
+   "sale_amount_pkr",
+   "supplier",
+   "purchase_amount",
+   "tax_rate",
+   "non_taxable"
+  ],
  "fields": [
   {
    "fieldname": "passenger_name",
@@ -163,6 +167,31 @@
    "label": "Sale Amount (PKR)",
    "in_list_view": 1,
    "columns": 2
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "purchase_amount",
+   "fieldtype": "Currency",
+   "label": "Purchase Amount (PKR)",
+   "description": "Cost for this ticket; Defaults from the ticket net when blank"
+  },
+  {
+   "fieldname": "tax_rate",
+   "fieldtype": "Select",
+   "label": "GST Rate",
+   "options": "0\n5",
+   "default": "0"
+  },
+  {
+   "fieldname": "non_taxable",
+   "fieldtype": "Currency",
+   "label": "Non Taxable (PKR)",
+   "description": "Airline taxes / fees inside the sale amount that are outside GST"
   }
  ],
  "links": [],

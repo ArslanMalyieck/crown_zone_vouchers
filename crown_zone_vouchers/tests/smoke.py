@@ -5,11 +5,11 @@ Run on a TEST site only (it creates real documents):
 Prints a PASS/FAIL line per check and a summary. Nothing is deleted afterwards.
 """
 import frappe
-from frappe.utils import add_days, nowdate
+from frappe.utils import add_days, flt, nowdate
 
 RESULTS = []
 PREFIX = {"Airline": "ATV", "Hotel": "HTV", "Visa": "VSV", "Transport": "TRN", "Umrah": "UMH", "Hajj": "HAJ",
-          "Tour": "CZ-ACT"}
+          "Tour": "CZ-ACT", "Ticketing": "TKV"}
 
 
 def _assert(cond, msg="assertion failed"):
@@ -77,7 +77,19 @@ def payload(service):
         d.update(cz_voucher_title="Desert Safari", cz_tour_name="Desert Safari - Sharing (Land Cruiser)",
                  cz_tour_date=add_days(t, 5), cz_pickup_location="Ibis Deira Creekside Dubai",
                  cz_pickup_time="15:00:00", cz_total_adults=2, cz_total_children=1,
-                 cz_service_lines=[{"category": "Tour", "description": "Desert Safari - Sharing", "qty": 3, "rate": 9000}])
+                 cz_service_lines=[{"category": "Tour", "description": "Desert Safari - Sharing", "qty": 3, "rate": 5000,
+                                    "non_taxable_price": 1000}])
+    elif service == "Ticketing":
+        d.update(items=[
+            {"item_code": "Airline Ticket", "qty": 1, "final_price": 105000, "cz_tax_rate": "0",
+             "cz_passenger": "Ali Khan", "cz_ticket_no": "176-111", "cz_flight_no": "EK601", "cz_class": "Y",
+             "cz_sector": "KHI-DXB", "cz_travel_date": add_days(t, 10), "cz_tax_sp": 5000,
+             "cz_tax_psf": 2000, "cz_tax_srb": 300, "supplier": "CZ Test Supplier",
+             "purchase_price": 90000, "cz_manual": 1},
+            {"item_code": "Airline Ticket", "qty": 1, "final_price": 110000, "cz_tax_rate": "5",
+             "cz_passenger": "Sara Khan", "cz_ticket_no": "176-222", "cz_sector": "KHI-DXB",
+             "cz_tax_other": 1000, "supplier": "CZ Test Supplier", "purchase_price": 95000, "cz_manual": 1},
+        ])
     else:  # Umrah / Hajj
         d.update(cz_package_name="%s Gold Package" % service, cz_travel_date=add_days(t, 30),
                  cz_return_date=add_days(t, 45),
@@ -93,7 +105,7 @@ def run():
     frappe.set_user("Administrator")
     ensure_party()
     posted = {}
-    for service in ("Airline", "Hotel", "Visa", "Transport", "Umrah", "Hajj", "Tour"):
+    for service in ("Airline", "Hotel", "Visa", "Transport", "Umrah", "Hajj", "Tour", "Ticketing"):
         so = check("[%s] create draft voucher" % service, lambda s=service: frappe.get_doc(payload(s)).insert())
         if not so:
             continue
@@ -144,7 +156,6 @@ def run():
             _assert(set_hold(v, 1) == "On Hold")
             try:
                 si = make_sales_invoice(v)
-                si.cz_invoice_tax_type = "Without Tax"
                 si.insert()
             except Exception:
                 pass
@@ -155,8 +166,6 @@ def run():
 
         def invoice():
             si = make_sales_invoice(v)
-            si.cz_invoice_tax_type = "Without Tax"
-            si.taxes = []
             si.insert()
             _assert(si.cz_travel_voucher == v and si.naming_series.startswith("INV-AIR"))
             _assert(frappe.db.get_value("Sales Order", v, "cz_invoice_status") == "Draft")
@@ -166,7 +175,6 @@ def run():
         def dup():
             try:
                 s2 = make_sales_invoice(v)
-                s2.cz_invoice_tax_type = "Without Tax"
                 s2.insert()
             except Exception:
                 return
@@ -185,29 +193,60 @@ def run():
                 _assert(frappe.db.get_value("Sales Order", v, "cz_invoice_status") == "Void")
             check("[Accounts] submit -> Issued, cancel -> Void (needs income/debtors accounts configured)", submit_invoice)
 
-        def tax_rule():
+        def tax_type_derived():
             s3 = make_sales_invoice(v)
-            s3.cz_invoice_tax_type = "With Tax"
-            s3.taxes = []
-            try:
-                s3.insert()
-            except Exception:
-                return
-            raise AssertionError("With Tax invoice accepted without tax rows")
-        check("[Accounts] With Tax invoice requires tax rows", tax_rule)
+            s3.insert()
+            _assert(s3.cz_invoice_tax_type == "Without Tax", "zero rated voucher must give Without Tax")
+            frappe.db.rollback()
+        check("[Accounts] Invoice Type derived from data (no manual switch)", tax_type_derived)
+
+    tk = posted.get("Ticketing")
+    if tk:
+        def ticketing_items():
+            d = frappe.get_doc("Sales Order", tk)
+            _assert(len(d.items) == 2, "same item twice must be kept as two rows")
+            first, second = d.items
+            _assert(flt(first.cz_taxes_total) == 7300, "ticket tax buckets must total 7300")
+            _assert(flt(first.rate) == 105000, "zero rated ticket keeps selling price as rate")
+            _assert(abs(flt(second.rate) - 104761.90) < 0.01, "ticket net rate")
+            _assert(abs(flt(second.vat) - 5238.10) < 0.01, "ticket GST")
+            _assert(abs(flt(d.grand_total) - 215000) < 0.01, "grand total must equal sum of selling prices")
+            _assert(len(d.taxes) == 1 and abs(flt(d.taxes[0].tax_amount) - 5238.10) < 0.01, "single GST row")
+        check("[Ticketing] same item twice at different rates + VAT at item level", ticketing_items)
+
+        def ticketing_invoice():
+            from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice as mk
+            si = mk(tk)
+            si.insert()
+            _assert(si.naming_series.startswith("INV-TKT"))
+            _assert(si.cz_invoice_tax_type == "With Tax", "GST invoice must be With Tax")
+            _assert(len(si.items) == 2)
+            row = [i for i in si.items if i.cz_ticket_no == "176-222"][0]
+            _assert(row.supplier == "CZ Test Supplier", "item supplier must come from the voucher")
+            _assert(abs(flt(row.final_price) - 110000) < 0.01, "selling price must come from the voucher")
+            _assert(abs(flt(si.grand_total) - 215000) < 0.01, "invoice total must match the voucher")
+            html = frappe.get_print("Sales Invoice", si.name, "CZ Invoice")
+            _assert("176-222" in html and "AIRLINE TICKETS" in html.upper())
+            return si
+        check("[Ticketing] invoice fetches items, supplier, GST + print", ticketing_invoice)
+
+        def ticketing_voucher_print():
+            html = frappe.get_print("Sales Order", tk, "CZ Ticketing Voucher")
+            _assert("AIRLINE TICKETING VOUCHER" in html and "176-111" in html)
+        check("[Ticketing] voucher print", ticketing_voucher_print)
 
     t = posted.get("Tour")
     if t:
         def tour_invoice():
             from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice as mk
             si = mk(t)
-            si.cz_invoice_tax_type = "Without Tax"
-            si.taxes = []
             si.insert()
             _assert(si.naming_series.startswith("INV-TUR"))
+            _assert(si.cz_invoice_tax_type == "With Tax", "tour line has 5% GST")
+            _assert(abs(flt(si.total_taxes_and_charges) - 571.43) < 0.05, "GST on the taxable part only")
             html = frappe.get_print("Sales Invoice", si.name, "CZ Invoice")
-            _assert("SALES INVOICE" in html and "Desert Safari" in html)
-        check("[Tour] invoice series INV-TUR + CZ Invoice dispatcher prints", tour_invoice)
+            _assert("INVOICE" in html and "Desert Safari" in html)
+        check("[Tour] invoice series INV-TUR + GST on taxable part + print", tour_invoice)
 
     get_data = frappe.get_attr(
         "crown_zone_vouchers.crown_zone_vouchers.report.posted_voucher_queue.posted_voucher_queue.get_data")

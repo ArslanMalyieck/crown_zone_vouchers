@@ -1,6 +1,7 @@
 {% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
 {% include "crown_zone_vouchers/templates/print/_css.html" %}
 {% set v = cz_voucher(doc) %}
+{% set with_tax = (doc.taxes|length > 0 and (doc.total_taxes_and_charges|float) > 0) %}
 {% set service = doc.cz_service_type or (v.service_type if v else "") %}
 {% set detail = "" %}
 {% if service == "Visa" and v %}
@@ -12,15 +13,39 @@
 {% elif service == "Transport" and v %}
 {% set detail = "Service: " ~ (v.cz_transport_service or "") ~ " | Date: " ~ cz_date(v.cz_tour_date or v.cz_travel_date) %}
 {% endif %}
-{{ m.frame_open((doc.items|length) + 14, "cz-inv") }}
+{{ m.frame_open((doc.items|length) + 20, "cz-inv") }}
 {{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc) }}
 {{ m.inv_billto(doc, v, with_tax) }}
-<div class="cz-inv-sec">{{ svc_title or service }} SERVICES &amp; CHARGES</div>
-<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:{% if with_tax %}46%{% else %}54%{% endif %}">Description</th><th class="c" style="width:8%">Qty</th><th class="r" style="width:14%">Rate</th>{% if with_tax %}<th class="r" style="width:14%">Tax</th>{% endif %}<th class="r" style="width:14%">Amount</th></tr></thead><tbody>
-{% for i in doc.items %}
-<tr><td class="c">{{ loop.index }}</td><td><div class="cz-inv-item-title">{{ (i.description or i.item_name) | striptags }}</div>{% if detail %}<div class="cz-inv-item-meta">{{ detail }}</div>{% endif %}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r">{{ cz_money(i.rate) }}</td>{% if with_tax %}<td class="r">{% if i.get("tax_rate") not in (None, "") %}{{ i.get("tax_rate") }}%{% endif %}</td>{% endif %}<td class="r">{{ cz_money(i.amount) }}</td></tr>
+{% if v and service in ("Visa", "Umrah", "Hajj", "Tour") and v.cz_travellers %}
+<div class="cz-inv-sec">PASSENGERS / APPLICANTS</div>
+<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th>Name</th><th style="width:10%">Type</th><th style="width:16%">Passport No.</th><th style="width:14%">Nationality</th><th style="width:10%">Passport Expiry</th></tr></thead><tbody>
+{% for t in v.cz_travellers %}
+<tr><td class="c">{{ loop.index }}</td><td>{{ t.traveller_name or "" }}</td><td>{{ t.traveller_type or "" }}</td><td>{{ t.passport_no or "" }}</td><td>{{ t.nationality or "" }}</td><td>{{ cz_date(t.passport_expiry) }}</td></tr>
 {% endfor %}
-{{ m.pad([10 - (doc.items|length), 0]|max, 6 if with_tax else 5) }}
+</tbody></table>
+{% endif %}
+{% if v and service in ("Umrah", "Hajj") and v.cz_hotel_stays %}
+<div class="cz-inv-sec">HOTEL ACCOMMODATION</div>
+<table class="cz-inv-tbl"><thead><tr><th>Hotel</th><th style="width:14%">City</th><th style="width:12%">Check-in</th><th style="width:12%">Check-out</th><th class="c" style="width:8%">Nights</th><th class="c" style="width:8%">Rooms</th><th style="width:14%">Room Type</th></tr></thead><tbody>
+{% for h in v.cz_hotel_stays %}
+<tr><td>{{ h.hotel_name or "" }}</td><td>{{ h.city or "" }}</td><td>{{ cz_date(h.check_in) }}</td><td>{{ cz_date(h.check_out) }}</td><td class="c">{{ h.nights or "" }}</td><td class="c">{{ h.rooms or "" }}</td><td>{{ h.room_type or "" }}</td></tr>
+{% endfor %}
+</tbody></table>
+{% endif %}
+{% if v and service == "Transport" and v.cz_trips %}
+<div class="cz-inv-sec">TRANSPORT ITINERARY</div>
+<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:18%">Date / Time</th><th>Pickup</th><th>Drop-off</th><th style="width:16%">Vehicle</th><th class="c" style="width:8%">Pax</th></tr></thead><tbody>
+{% for t in v.cz_trips %}
+<tr><td class="c">{{ loop.index }}</td><td>{{ cz_datetime(t.pickup_datetime) }}</td><td>{{ t.pickup_location or "" }}</td><td>{{ t.dropoff_location or "" }}</td><td>{{ t.vehicle_type or "" }} {{ t.plate_no or "" }}</td><td class="c">{{ t.passengers or "" }}</td></tr>
+{% endfor %}
+</tbody></table>
+{% endif %}
+<div class="cz-inv-sec">{{ svc_title or service }} SERVICES &amp; CHARGES</div>
+<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:{% if with_tax %}46%{% else %}54%{% endif %}">Description</th><th class="c" style="width:8%">Qty</th><th class="r" style="width:14%">Rate</th>{% if with_tax %}<th class="r" style="width:14%">GST</th>{% endif %}<th class="r" style="width:14%">Amount</th></tr></thead><tbody>
+{% for i in doc.items %}
+<tr><td class="c">{{ loop.index }}</td><td><div class="cz-inv-item-title">{{ (i.description or i.item_name) | striptags }}</div>{% if detail %}<div class="cz-inv-item-meta">{{ detail }}</div>{% endif %}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r">{{ cz_money(i.rate) }}</td>{% if with_tax %}<td class="r">{{ cz_money((i.get("vat") or 0) * (i.qty or 1)) }}</td>{% endif %}<td class="r">{{ cz_money(i.amount) }}</td></tr>
+{% endfor %}
+{{ m.pad([6 - (doc.items|length), 0]|max, 6 if with_tax else 5) }}
 </tbody></table>
 {% include "crown_zone_vouchers/templates/print/_inv_totals.html" %}
 {{ m.inv_payment(doc, with_tax) }}

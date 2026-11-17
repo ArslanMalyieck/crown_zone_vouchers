@@ -179,3 +179,77 @@ def cz_sector(doc):
     for s in segs:
         parts.append(s.sector_to or "")
     return "-".join([p for p in parts if p])
+
+
+TAX_BUCKETS = (
+    ("SP", "cz_tax_sp", "Service / Passenger Tax"),
+    ("RG", "cz_tax_rg", "Regulatory / Government"),
+    ("PSF", "cz_tax_psf", "Passenger Service Fee"),
+    ("SRB", "cz_tax_srb", "Sindh Revenue Board"),
+    ("YQ", "cz_tax_yq", "Carrier Surcharge (YQ)"),
+    ("Other", "cz_tax_other", "Other Taxes"),
+)
+
+
+def cz_ticket_row(row):
+    """Printed split of one ticket row: fare + taxes = selling price."""
+    taxes = flt(row.get("cz_taxes_total"))
+    selling = flt(row.get("final_price"))
+    if selling <= 0:
+        selling = flt(row.get("rate"))
+    return frappe._dict(
+        fare=flt(selling - taxes, 2),
+        taxes=flt(taxes, 2),
+        amount=flt(selling, 2),
+        taxes_breakup=_breakup(row),
+    )
+
+
+def _breakup(row):
+    out = []
+    for code, field, _label in TAX_BUCKETS:
+        amount = flt(row.get(field))
+        if amount:
+            out.append("%s %s" % (code, cz_money(amount)))
+    return "  ".join(out)
+
+
+def cz_ticket_rows(items):
+    """Split invoice / voucher lines into ticket rows and other charges."""
+    tickets, charges = [], []
+    for row in items or []:
+        if row.get("cz_ticket_no") or row.get("cz_passenger") or row.get("cz_taxes_total"):
+            tickets.append(row)
+        else:
+            charges.append(row)
+    return frappe._dict(tickets=tickets, charges=charges)
+
+
+def cz_chunks(rows, first=14, rest=20):
+    rows = list(rows or [])
+    if not rows:
+        return []
+    out = [rows[:first]]
+    start = first
+    while start < len(rows):
+        out.append(rows[start:start + rest])
+        start += rest
+    return out
+
+
+def cz_tax_buckets(items):
+    out = []
+    for code, field, label in TAX_BUCKETS:
+        total = sum(flt(r.get(field)) for r in (items or []))
+        if total:
+            out.append(frappe._dict(code=code, label=label, total=flt(total, 2)))
+    return out
+
+
+def cz_words(amount, currency="PKR"):
+    from frappe.utils import money_in_words
+    try:
+        words = money_in_words(amount, currency)
+    except Exception:
+        return ""
+    return words.upper() if currency == "PKR" else words

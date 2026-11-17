@@ -1,20 +1,38 @@
 // Crown Zone Vouchers - Sales Order (= travel voucher) client script
 const CZ_ITEM_COLS = {
 	Airline: ["cz_passenger", "cz_ticket_no", "cz_airline", "cz_sector", "cz_travel_date"],
+	Ticketing: ["cz_passenger", "cz_ticket_no", "cz_airline", "cz_flight_no", "cz_class", "cz_sector", "cz_travel_date"],
 	Hotel: ["cz_hotel_city", "cz_room_type", "cz_lead_guest", "cz_rooms", "cz_nights", "cz_unit_rate", "cz_other_fees"],
 };
 const CZ_ITEM_ALL = ["cz_passenger", "cz_ticket_no", "cz_airline", "cz_sector", "cz_travel_date",
-	"cz_hotel_city", "cz_room_type", "cz_lead_guest", "cz_rooms", "cz_nights", "cz_unit_rate", "cz_other_fees"];
+	"cz_flight_no", "cz_class", "cz_hotel_city", "cz_room_type", "cz_lead_guest", "cz_rooms",
+	"cz_nights", "cz_unit_rate", "cz_other_fees"];
+const CZ_PRICING_COLS = ["final_price", "government_fee", "cz_tax_rate", "vat", "supplier", "purchase_price"];
+const CZ_TICKET_TAX = ["cz_tax_sp", "cz_tax_rg", "cz_tax_psf", "cz_tax_srb", "cz_tax_yq", "cz_tax_other"];
 
-window.cz_item_columns = function (frm, service) {
+function cz_grid_prop(grid, fieldname, prop, value) {
+	try {
+		grid.update_docfield_property(fieldname, prop, value);
+	} catch (e) {
+		/* field not installed on this site */
+	}
+}
+
+window.cz_item_columns = function (frm) {
 	const grid = frm.fields_dict.items && frm.fields_dict.items.grid;
 	if (!grid) return;
+	const service = frm.doc.service_type;
 	const show = CZ_ITEM_COLS[service] || [];
 	CZ_ITEM_ALL.forEach((fn) => {
 		const on = show.includes(fn);
-		grid.update_docfield_property(fn, "hidden", on ? 0 : 1);
-		grid.update_docfield_property(fn, "in_list_view", on ? 1 : 0);
+		cz_grid_prop(grid, fn, "hidden", on ? 0 : 1);
+		cz_grid_prop(grid, fn, "in_list_view", on ? 1 : 0);
 	});
+	CZ_PRICING_COLS.forEach((fn) => cz_grid_prop(grid, fn, "hidden", service ? 0 : 1));
+	CZ_TICKET_TAX.forEach((fn) => cz_grid_prop(grid, fn, "hidden", service === "Ticketing" ? 0 : 1));
+	cz_grid_prop(grid, "cz_taxes_total", "hidden", service === "Ticketing" ? 0 : 1);
+	cz_grid_prop(grid, "cz_tax_rate", "read_only", 0);
+	cz_grid_prop(grid, "tax_rate", "read_only", 1);
 	grid.reset_grid();
 };
 
@@ -73,8 +91,8 @@ function cz_recalc_tickets(frm) {
 	(frm.doc.cz_air_tickets || []).forEach((t) => {
 		t.taxes_total = taxes[t.idx] || 0;
 		t.ticket_gross = flt(t.supplier_fare) + t.taxes_total;
-		t.commission_amount = (flt(t.supplier_fare) * flt(t.commission_percent)) / 100;
-		t.wht_amount = (t.commission_amount * flt(t.wht_percent)) / 100;
+		t.commission_amount = flt(t.supplier_fare) * flt(t.commission_percent) / 100;
+		t.wht_amount = t.commission_amount * flt(t.wht_percent) / 100;
 		t.supplier_amount_foreign = t.ticket_gross - t.commission_amount + t.wht_amount;
 		t.supplier_amount_pkr = t.supplier_amount_foreign * rate;
 		total += t.supplier_amount_foreign;
@@ -90,8 +108,19 @@ function cz_nights(a, b) {
 
 frappe.ui.form.on("Sales Order", {
 	refresh(frm) {
-		cz_item_columns(frm, frm.doc.service_type);
+		cz_item_columns(frm);
 		cz_service_filter(frm);
+		if (frm.doc.service_type && !frm.is_new()) {
+			frm.add_custom_button(__("Rebuild Items"), function () {
+				frappe.call({
+					method: "crown_zone_vouchers.events.sales_order.rebuild_items",
+					args: { docname: frm.doc.name },
+					freeze: true,
+					freeze_message: __("Rebuilding items..."),
+					callback: function () { frm.reload_doc(); },
+				});
+			}, __("Actions"));
+		}
 		if (frm.doc.docstatus === 1 && cz_roles_ok() && frm.doc.service_type
 			&& (!frm.doc.workflow_state || frm.doc.workflow_state === "Approved")) {
 			const st = frm.doc.cz_invoice_status;
@@ -108,12 +137,24 @@ frappe.ui.form.on("Sales Order", {
 		}
 	},
 	service_type(frm) {
-		cz_item_columns(frm, frm.doc.service_type);
+		cz_item_columns(frm);
 		if (!frm.doc.service_type) return;
 		frappe.db.get_value("Travel Service Type", frm.doc.service_type, "voucher_prefix").then((r) => {
 			const p = r.message && r.message.voucher_prefix;
 			if (p) frm.set_value("naming_series", p + "-.YYYY.-.#####");
 		});
+	},
+	items_add(frm, cdt, cdn) {
+		const row = locals[cdt] && locals[cdt][cdn];
+		if (!row) return;
+		row.cz_manual = 1;
+		if (!row.cz_tax_rate) {
+			frappe.db.get_value("Travel Service Type", frm.doc.service_type, "default_tax_rate").then((r) => {
+				const d = r.message && r.message.default_tax_rate;
+				frappe.model.set_value(cdt, cdn, "cz_tax_rate", d || "0");
+			});
+		}
+		if (frm.doc.cz_supplier) frappe.model.set_value(cdt, cdn, "supplier", frm.doc.cz_supplier);
 	},
 	cz_check_in(frm) { frm.set_value("cz_total_nights", cz_nights(frm.doc.cz_check_in, frm.doc.cz_check_out)); },
 	cz_check_out(frm) { frm.set_value("cz_total_nights", cz_nights(frm.doc.cz_check_in, frm.doc.cz_check_out)); },
@@ -123,6 +164,47 @@ frappe.ui.form.on("Sales Order", {
 	cz_air_taxes_remove(frm) { cz_recalc_tickets(frm); },
 	cz_air_tickets_remove(frm) { cz_recalc_tickets(frm); },
 });
+
+// ---- item row: selling price is tax inclusive (shaunglobal method)
+function cz_row_calc(frm, cdt, cdn) {
+	const row = locals[cdt][cdn];
+	if (!row) return;
+	const selling = flt(row.final_price) || flt(row.rate);
+	if (selling <= 0) return;
+	const non_taxable = Math.min(flt(row.government_fee), selling);
+	const gst = flt(row.cz_tax_rate || row.tax_rate);
+	const base = Math.max(selling - non_taxable, 0);
+	let taxable = base, vat = 0;
+	if (gst > 0 && base > 0) {
+		taxable = flt(base * 100 / (100 + gst), 2);
+		vat = flt(taxable * gst / 100, 2);
+	}
+	frappe.model.set_value(cdt, cdn, "taxed_price", taxable);
+	frappe.model.set_value(cdt, cdn, "vat", vat);
+	frappe.model.set_value(cdt, cdn, "final_price", selling);
+}
+frappe.ui.form.on("Sales Order Item", {
+	final_price: cz_row_calc,
+	cz_tax_rate: cz_row_calc,
+	government_fee: cz_row_calc,
+	rate(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (row && !flt(row.final_price)) frappe.model.set_value(cdt, cdn, "final_price", flt(row.rate));
+	},
+	cz_tax_sp(frm, cdt, cdn) { cz_tax_total(frm, cdt, cdn); },
+	cz_tax_rg(frm, cdt, cdn) { cz_tax_total(frm, cdt, cdn); },
+	cz_tax_psf(frm, cdt, cdn) { cz_tax_total(frm, cdt, cdn); },
+	cz_tax_srb(frm, cdt, cdn) { cz_tax_total(frm, cdt, cdn); },
+	cz_tax_yq(frm, cdt, cdn) { cz_tax_total(frm, cdt, cdn); },
+	cz_tax_other(frm, cdt, cdn) { cz_tax_total(frm, cdt, cdn); },
+});
+
+function cz_tax_total(frm, cdt, cdn) {
+	const row = locals[cdt][cdn];
+	if (!row) return;
+	const total = CZ_TICKET_TAX.reduce((s, f) => s + flt(row[f]), 0);
+	frappe.model.set_value(cdt, cdn, "cz_taxes_total", flt(total, 2));
+}
 
 // ---- hotel rows
 function cz_hotel_row(frm, cdt, cdn) {
@@ -155,31 +237,4 @@ frappe.ui.form.on("Voucher Air Ticket", {
 frappe.ui.form.on("Voucher Air Tax", {
 	amount(frm) { cz_recalc_tickets(frm); },
 	ticket_row_no(frm) { cz_recalc_tickets(frm); },
-});
-
-
-// ---- voucher item table: auto-built from service lines
-function cz_apply_item_table_mode(frm) {
-	if (!frm.fields_dict || !frm.fields_dict.items) return;
-	const is_voucher = !!frm.doc.service_type;
-	frm.set_df_property("items", "read_only", 0);
-	frm.set_df_property("items", "reqd", is_voucher ? 0 : 1);
-}
-
-frappe.ui.form.on("Sales Order", {
-	refresh(frm) {
-		cz_apply_item_table_mode(frm);
-		if (frm.doc.service_type && !frm.is_new()) {
-			frm.add_custom_button(__("Rebuild Items"), function () {
-				frappe.call({
-					method: "crown_zone_vouchers.events.sales_order.rebuild_items",
-					args: { docname: frm.doc.name },
-					freeze: true,
-					freeze_message: __("Rebuilding items..."),
-					callback: function () { frm.reload_doc(); },
-				});
-			}, __("Actions"));
-		}
-	},
-	service_type(frm) { cz_apply_item_table_mode(frm); },
 });

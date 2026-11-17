@@ -1,6 +1,7 @@
 {% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
 {% include "crown_zone_vouchers/templates/print/_css.html" %}
 {% set v = cz_voucher(doc) %}
+{% set with_tax = (doc.taxes|length > 0 and (doc.total_taxes_and_charges|float) > 0) %}
 {% set tickets = doc.items or [] %}
 {% set first = tickets[0] if tickets else None %}
 {{ m.frame_open(tickets|length + 14, "cz-inv") }}
@@ -13,11 +14,12 @@
  ("Sector", first.cz_sector if first else "")
 ]) }}
 <div class="cz-inv-sec">AIRLINE TICKET DETAILS</div>
-<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:22%">Passenger</th><th style="width:17%">Ticket No.</th><th style="width:13%">Airline</th><th style="width:14%">Sector</th><th style="width:13%">Travel Date</th><th class="r" style="width:17%">Amount ({{ doc.currency or "PKR" }})</th></tr></thead><tbody>
+<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:20%">Passenger</th><th style="width:15%">Ticket No.</th><th style="width:12%">Airline</th><th style="width:13%">Sector</th><th style="width:11%">Travel Date</th><th class="r" style="width:8%">Fare</th><th class="r" style="width:8%">Taxes</th><th class="r" style="width:9%">Amount</th></tr></thead><tbody>
 {% for i in tickets %}
-<tr><td class="c">{{ loop.index }}</td><td>{{ i.cz_passenger or (i.description or i.item_name) | striptags }}</td><td>{{ i.cz_ticket_no or "" }}</td><td>{{ i.cz_airline or "" }}</td><td>{{ i.cz_sector or "" }}</td><td>{{ cz_date(i.cz_travel_date) }}</td><td class="r">{{ cz_money(i.amount) }}</td></tr>
+{% set tr = cz_ticket_row(i) %}
+<tr><td class="c">{{ loop.index }}</td><td>{{ i.cz_passenger or (i.description or i.item_name) | striptags }}</td><td>{{ i.cz_ticket_no or "" }}</td><td>{{ i.cz_airline or "" }}</td><td>{{ i.cz_sector or "" }}</td><td>{{ cz_date(i.cz_travel_date) }}</td><td class="r">{{ cz_money(tr.fare) }}</td><td class="r">{{ cz_money(tr.taxes) }}</td><td class="r">{{ cz_money(tr.amount) }}</td></tr>
 {% endfor %}
-{{ m.pad([4 - (tickets|length), 0]|max, 7) }}
+{{ m.pad([4 - (tickets|length), 0]|max, 9) }}
 </tbody></table>
 {% if v and v.cz_flight_segments %}
 <div class="cz-inv-sec" style="margin-top:6px">FLIGHT ITINERARY</div>
