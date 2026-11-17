@@ -104,6 +104,7 @@ def payload(service):
 def run():
     frappe.set_user("Administrator")
     ensure_party()
+    frappe.db.commit()
     posted = {}
     for service in ("Airline", "Hotel", "Visa", "Transport", "Umrah", "Hajj", "Tour", "Ticketing"):
         so = check("[%s] create draft voucher" % service, lambda s=service: frappe.get_doc(payload(s)).insert())
