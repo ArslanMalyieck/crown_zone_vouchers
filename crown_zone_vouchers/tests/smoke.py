@@ -28,19 +28,31 @@ def check(name, fn):
         return None
 
 
+CUSTOMER = ["CZ Test Customer"]
+SUPPLIER = ["CZ Test Supplier"]
+
+
 def ensure_party():
-    if not frappe.db.exists("Customer", "CZ Test Customer"):
-        frappe.get_doc({"doctype": "Customer", "customer_name": "CZ Test Customer", "customer_type": "Company",
-                        "customer_group": frappe.db.get_value("Customer Group", {"is_group": 0}, "name"),
-                        "territory": frappe.db.get_value("Territory", {"is_group": 0}, "name")}).insert()
-    if not frappe.db.exists("Supplier", "CZ Test Supplier"):
-        frappe.get_doc({"doctype": "Supplier", "supplier_name": "CZ Test Supplier",
-                        "supplier_group": frappe.db.get_value("Supplier Group", {"is_group": 0}, "name")}).insert()
+    name = frappe.db.get_value("Customer", {"customer_name": "CZ Test Customer"}, "name")
+    if not name:
+        doc = frappe.get_doc({"doctype": "Customer", "customer_name": "CZ Test Customer", "customer_type": "Company",
+                              "customer_group": frappe.db.get_value("Customer Group", {"is_group": 0}, "name"),
+                              "territory": frappe.db.get_value("Territory", {"is_group": 0}, "name")})
+        doc.insert(ignore_permissions=True)
+        name = doc.name
+    CUSTOMER[0] = name
+    name = frappe.db.get_value("Supplier", {"supplier_name": "CZ Test Supplier"}, "name")
+    if not name:
+        doc = frappe.get_doc({"doctype": "Supplier", "supplier_name": "CZ Test Supplier",
+                              "supplier_group": frappe.db.get_value("Supplier Group", {"is_group": 0}, "name")})
+        doc.insert(ignore_permissions=True)
+        name = doc.name
+    SUPPLIER[0] = name
 
 
 def base(service):
-    return {"doctype": "Sales Order", "service_type": service, "customer": "CZ Test Customer",
-            "transaction_date": nowdate(), "cz_supplier": "CZ Test Supplier", "cz_booking_status": "Pending",
+    return {"doctype": "Sales Order", "service_type": service, "customer": CUSTOMER[0],
+            "transaction_date": nowdate(), "cz_supplier": SUPPLIER[0], "cz_booking_status": "Pending",
             "cz_booking_reference": "BK-%s" % service, "cz_lead_guest": "Ali Khan",
             "cz_supplier_confirmation_no": "CONF123", "cz_purchase_currency": "PKR", "cz_purchase_amount": 1000,
             "cz_travellers": [{"traveller_name": "Ali Khan", "traveller_type": "Adult", "passport_no": "AB1234567",
@@ -84,11 +96,11 @@ def payload(service):
             {"item_code": "Airline Ticket", "qty": 1, "final_price": 105000, "cz_tax_rate": "0",
              "cz_passenger": "Ali Khan", "cz_ticket_no": "176-111", "cz_flight_no": "EK601", "cz_class": "Y",
              "cz_sector": "KHI-DXB", "cz_travel_date": add_days(t, 10), "cz_tax_sp": 5000,
-             "cz_tax_psf": 2000, "cz_tax_srb": 300, "supplier": "CZ Test Supplier",
+             "cz_tax_psf": 2000, "cz_tax_srb": 300, "supplier": SUPPLIER[0],
              "purchase_price": 90000, "cz_manual": 1},
             {"item_code": "Airline Ticket", "qty": 1, "final_price": 110000, "cz_tax_rate": "5",
              "cz_passenger": "Sara Khan", "cz_ticket_no": "176-222", "cz_sector": "KHI-DXB",
-             "cz_tax_other": 1000, "supplier": "CZ Test Supplier", "purchase_price": 95000, "cz_manual": 1},
+             "cz_tax_other": 1000, "supplier": SUPPLIER[0], "purchase_price": 95000, "cz_manual": 1},
         ])
     else:  # Umrah / Hajj
         d.update(cz_package_name="%s Gold Package" % service, cz_travel_date=add_days(t, 30),
@@ -223,7 +235,7 @@ def run():
             _assert(si.cz_invoice_tax_type == "With Tax", "GST invoice must be With Tax")
             _assert(len(si.items) == 2)
             row = [i for i in si.items if i.cz_ticket_no == "176-222"][0]
-            _assert(row.supplier == "CZ Test Supplier", "item supplier must come from the voucher")
+            _assert(row.supplier == SUPPLIER[0], "item supplier must come from the voucher")
             _assert(abs(flt(row.final_price) - 110000) < 0.01, "selling price must come from the voucher")
             _assert(abs(flt(si.grand_total) - 215000) < 0.01, "invoice total must match the voucher")
             html = frappe.get_print("Sales Invoice", si.name, "CZ Invoice")
