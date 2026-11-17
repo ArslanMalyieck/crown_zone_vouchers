@@ -93,6 +93,16 @@ def run():
     voucher_html = frappe.get_print("Sales Order", small.name, "CZ Ticketing Voucher")
     check("voucher shows fare/taxes", "TAXES BREAKUP" in voucher_html and "176-9000001" in voucher_html)
 
+    try:
+        from frappe.utils.pdf import get_pdf
+        pdf = get_pdf(big_html, {"orientation": "Portrait"})
+        path = os.path.join(OUT, "ticketing_invoice_big.pdf")
+        with open(path, "wb") as fh:
+            fh.write(pdf)
+        check("big invoice pdf", len(pdf) > 10000, len(pdf))
+    except Exception as exc:  # noqa
+        check("big invoice pdf", False, "%s: %s" % (type(exc).__name__, str(exc)[:200]))
+
     print("\n==== PRINT PROBE ====")
     for name, ok, extra in results:
         print(("PASS  " if ok else "FAIL  ") + name + ("" if ok else "  -> %s" % extra))
