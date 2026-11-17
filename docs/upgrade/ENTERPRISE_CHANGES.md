@@ -116,3 +116,51 @@ New report: **Travel Voucher Invoice Pending**
 - Page numbers remain limited by the wkhtmltopdf renderer and are not added.
 - Legacy site-only formats (`Sales Auditing Voucher`, `Sales Invoice Print`, `Sales Invoice Return`) were not modified or deleted.
 - Existing `Travel Sales` users need service assignments after this deployment.
+
+## Phase 5 — Item-level GST, item-driven vouchers, Ticketing
+
+### VAT engine (crown-owned)
+
+- crown_zone_vouchers/events/vat.py implements the shaunglobal method so vouchers and their
+  invoices no longer depend on that app for GST:
+  - Selling Price is tax inclusive.
+  - Taxable = (Selling Price - Non Taxable) / (1 + rate); VAT = Taxable x rate.
+  - Item Rate = Selling Price - VAT.
+  - GST is the only document-level tax row (Actual, GST 5%); every airline / service charge
+    stays on the item row.
+  - One row per rate; the rounding residual is absorbed so the grand total always equals the
+    sum of Selling Prices (fixes the 1-paisa short totals).
+- Runs after any other app hook, on Sales Order and on voucher-linked Sales Invoice.
+- Invoice Type (cz_invoice_tax_type) is now derived from the data and read-only.
+- Zero-rated services (Airline, Hotel, Ticketing) default to 0% unless a row sets its own rate.
+
+### Item-level fields
+
+- Shared with shaunglobal when present (never overwritten): inal_price (Selling Price),
+  government_fee (Non Taxable), 	axed_price, 	ax_rate, at, purchase_price,
+  purchase_tax_rate, supplier.
+- Crown-owned: cz_tax_rate (0/5), cz_tax_sp, cz_tax_rg, cz_tax_psf, cz_tax_srb,
+  cz_tax_yq, cz_tax_other, cz_taxes_total, cz_flight_no, cz_class, cz_manual.
+- supplier column is created on Sales Order Item so every line can have its own supplier.
+
+### Voucher items
+
+- Items are the posting input for every voucher type; the service tabs still generate them.
+- Hand-added rows are kept (cz_manual) and the same item may appear twice at different
+  rates / suppliers (llow_multiple_items enabled).
+- Airline / Hotel child rows carry their own supplier, purchase amount, GST rate and
+  non-taxable amount.
+- Ticketing uses the Items grid directly (no tab rows).
+
+### Ticketing service
+
+- New Travel Service Type Ticketing (voucher TKV-, invoice INV-TKT-, item Airline Ticket).
+- Voucher print: passengers, fare / taxes / amount per ticket, taxes breakup, totals.
+- Invoice print: PDF-style statement with per-page totals, cumulative totals, taxes breakup,
+  net total, amount in words and signatures; 14 tickets on page 1 and 20 per page after.
+
+### Verification
+
+- 	ests/smoke.py: 82/82 (cz-test and a restored copy of live with shaunglobal active).
+- 	ests/enterprise_smoke.py: 14/14.
+- 	ests/print_probe.py: 15/15 (pagination, breakup, PDF).
