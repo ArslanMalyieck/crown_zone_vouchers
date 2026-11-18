@@ -82,6 +82,8 @@
 {% if doc.cz_dropoff_location %}<tr><td class="l">Drop-off</td><td class="v">{{ doc.cz_dropoff_location }}</td></tr>{% endif %}
 </table>
 
+{% set load = (doc.items|length) + (doc.cz_travellers|length) %}{% if load < 6 %}<div style="height:30mm"></div>{% elif load < 12 %}<div style="height:12mm"></div>{% endif %}
+
 <table style="margin-top:14px"><tr>
 <td style="width:124px;vertical-align:middle"><table class="czt-qr"><tr><td><img src="{{ cz_qr('CZ|' ~ doc.name ~ '|' ~ (doc.cz_posted_on or '')) }}"></td></tr></table></td>
 <td style="vertical-align:middle"><div class="czt-note"><div class="h">IMPORTANT NOTE</div><div class="p">{{ doc.cz_important_note or "Please be ready at the pickup point 15 minutes before pickup." }}</div></div></td>
