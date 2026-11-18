@@ -1,9 +1,11 @@
+{% macro brand_name(b) %}{% set parts = (b.name or "").split("&") %}{% if parts|length > 1 %}{{ parts[0]|trim }}<span class="l2">&amp; {{ parts[1]|trim }}</span>{% else %}{{ b.name }}{% endif %}{% endmacro %}
+
 {% macro header(title, doc) %}
 {% set b = cz_brand() %}
 <div class="cz-topbar"></div>
 <table class="cz-hdr"><tr>
 <td class="cz-logo">{% if b.logo %}<img src="{{ b.logo }}">{% endif %}</td>
-<td><div class="cz-name">{{ b.name }}</div><div class="cz-tag">{{ b.tagline }}</div></td>
+<td><div class="cz-name">{{ brand_name(b) }}</div><div class="cz-tag">{{ b.tagline }}</div></td>
 <td class="cz-contact">{{ b.address }}<br>PTCL: {{ b.ptcl }}<br>Mob: {{ b.mobile }}<br>{{ b.email }}</td>
 </tr></table>
 <table class="cz-titlebar"><tr>
@@ -53,16 +55,17 @@
 
 {% macro inv_header(title, doc) %}
 {% set b = cz_brand() %}
+{% set tsize = 15 if title|length <= 18 else 12.5 %}
 <table class="cz-inv-top"><tr>
 <td class="cz-inv-brand">
 {% if b.logo %}<img class="cz-inv-logo" src="{{ b.logo }}">{% endif %}
-<div class="cz-inv-brand-name">{{ b.name }}</div>
+<div class="cz-inv-brand-name">{{ brand_name(b) }}</div>
 <div class="cz-inv-brand-tag">{{ b.tagline }}</div>
 <div class="cz-inv-brand-line"></div>
 <div class="cz-inv-brand-meta">{{ b.address }}<br>{{ b.ptcl }}{% if b.mobile %} &nbsp;|&nbsp; {{ b.mobile }}{% endif %} &nbsp;|&nbsp; {{ b.email }}{% if b.srb %}<br>SRB No: {{ b.srb }}{% endif %}</div>
 </td>
 <td class="cz-inv-id">
-<div class="cz-inv-doc-type">{{ title }}</div>
+<div class="cz-inv-doc-type" style="font-size:{{ tsize }}pt">{{ title }}</div>
 <div class="cz-inv-id-grid">
 <table><tr><td>Invoice No.</td><td><b>{{ doc.name }}</b></td></tr>
 <tr><td>Invoice Date</td><td><b>{{ cz_date(doc.posting_date) }}</b></td></tr>
@@ -96,16 +99,17 @@
 {% endmacro %}
 
 {% macro inv_facts(pairs) %}
+{% set w = (100 / (pairs|length))|round(2) %}
 <table class="cz-inv-facts"><tr>
 {% for label, value in pairs %}
-<td><div class="cz-inv-fact-label">{{ label }}</div><div class="cz-inv-fact-value">{{ value if value not in (None, "") else "—" }}</div></td>
+<td style="width:{{ w }}%"><div class="cz-inv-fact-label">{{ label }}</div><div class="cz-inv-fact-value">{{ value if value not in (None, "") else "—" }}</div></td>
 {% endfor %}
 </tr></table>
 {% endmacro %}
 
 {% macro frame_open(load, extra_class="") %}<div class="cz {{ 'd3' if load > 22 else ('d2' if load > 13 else '') }} {{ extra_class }}"><table class="czp"><tr><td class="czp-main">{% endmacro %}
 {% macro frame_close(doc, title="TERMS & CONDITIONS", inquiries=False) %}</td></tr><tr><td class="czp-foot">{{ foot(doc, title, inquiries) }}</td></tr></table></div>{% endmacro %}
-{% macro pad(n, cols) %}{% for i in range(n) %}<tr>{% for c in range(cols) %}<td>&nbsp;</td>{% endfor %}</tr>{% endfor %}{% endmacro %}
+{% macro pad(n, cols) %}{% for i in range(n) %}<tr class="cz-fill">{% for c in range(cols) %}<td>&nbsp;</td>{% endfor %}</tr>{% endfor %}{% endmacro %}
 {% macro inv_payment(doc, with_tax=False) %}
 {% set b = cz_brand() %}
 <table class="cz-inv-payment"><tr>

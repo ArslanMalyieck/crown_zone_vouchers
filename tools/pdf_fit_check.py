@@ -155,7 +155,8 @@ def make_env(V, logo):
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(REPO), undefined=jinja2.Undefined)
     brand = D(name="CROWN ZONE TOURISM & TRAVELS AGENCY", tagline="Your Journey Our Priority",
               address="31, Hussani Housing Society,<br>Main University Road, Karachi, 75300", ptcl="0092-21-33516247",
-              mobile="0092-335-2226182", email="info@crownzone.com", website="", srb="S9687169-1", logo=logo)
+              mobile="0092-335-2226182", email="info@crownzone.com", website="", srb="S9687169-1", logo=logo,
+              accounts_email=utils.ACCOUNTS_EMAIL, accounts_mobile=utils.ACCOUNTS_MOBILE)
     png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
     env.globals.update(cz_brand=lambda: brand, cz_qr=lambda t: png, cz_money=utils.cz_money, cz_date=utils.cz_date,
                        cz_datefmt=utils.cz_datefmt, cz_time12=utils.cz_time12, cz_time=utils.cz_time,

@@ -20,7 +20,7 @@
 <div class="cz-inv-sec">PASSENGERS / APPLICANTS</div>
 <table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th>Name</th><th style="width:10%">Type</th><th style="width:16%">Passport No.</th><th style="width:14%">Nationality</th><th style="width:10%">Passport Expiry</th></tr></thead><tbody>
 {% for t in v.cz_travellers %}
-<tr><td class="c">{{ loop.index }}</td><td>{{ t.traveller_name or "" }}</td><td>{{ t.traveller_type or "" }}</td><td>{{ t.passport_no or "" }}</td><td>{{ t.nationality or "" }}</td><td>{{ cz_date(t.passport_expiry) }}</td></tr>
+<tr><td class="c">{{ loop.index }}</td><td>{{ t.traveller_name or "" }}</td><td>{{ t.traveller_type or "" }}</td><td>{{ t.passport_no or "" }}</td><td>{{ t.nationality or "" }}</td><td class="nw">{{ cz_date(t.passport_expiry) }}</td></tr>
 {% endfor %}
 </tbody></table>
 {% endif %}
@@ -28,7 +28,7 @@
 <div class="cz-inv-sec">HOTEL ACCOMMODATION</div>
 <table class="cz-inv-tbl"><thead><tr><th>Hotel</th><th style="width:14%">City</th><th style="width:12%">Check-in</th><th style="width:12%">Check-out</th><th class="c" style="width:8%">Nights</th><th class="c" style="width:8%">Rooms</th><th style="width:14%">Room Type</th></tr></thead><tbody>
 {% for h in v.cz_hotel_stays %}
-<tr><td>{{ h.hotel_name or "" }}</td><td>{{ h.city or "" }}</td><td>{{ cz_date(h.check_in) }}</td><td>{{ cz_date(h.check_out) }}</td><td class="c">{{ h.nights or "" }}</td><td class="c">{{ h.rooms or "" }}</td><td>{{ h.room_type or "" }}</td></tr>
+<tr><td>{{ h.hotel_name or "" }}</td><td>{{ h.city or "" }}</td><td class="nw">{{ cz_date(h.check_in) }}</td><td class="nw">{{ cz_date(h.check_out) }}</td><td class="c">{{ h.nights or "" }}</td><td class="c">{{ h.rooms or "" }}</td><td>{{ h.room_type or "" }}</td></tr>
 {% endfor %}
 </tbody></table>
 {% endif %}
@@ -36,17 +36,19 @@
 <div class="cz-inv-sec">TRANSPORT ITINERARY</div>
 <table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:18%">Date / Time</th><th>Pickup</th><th>Drop-off</th><th style="width:16%">Vehicle</th><th class="c" style="width:8%">Pax</th></tr></thead><tbody>
 {% for t in v.cz_trips %}
-<tr><td class="c">{{ loop.index }}</td><td>{{ cz_datetime(t.pickup_datetime) }}</td><td>{{ t.pickup_location or "" }}</td><td>{{ t.dropoff_location or "" }}</td><td>{{ t.vehicle_type or "" }} {{ t.plate_no or "" }}</td><td class="c">{{ t.passengers or "" }}</td></tr>
+<tr><td class="c">{{ loop.index }}</td><td class="nw">{{ cz_datetime(t.pickup_datetime) }}</td><td>{{ t.pickup_location or "" }}</td><td>{{ t.dropoff_location or "" }}</td><td>{{ t.vehicle_type or "" }} {{ t.plate_no or "" }}</td><td class="c">{{ t.passengers or "" }}</td></tr>
 {% endfor %}
 </tbody></table>
 {% endif %}
 <div class="cz-inv-sec">{{ svc_title or service }} SERVICES &amp; CHARGES</div>
 <table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:{% if with_tax %}46%{% else %}54%{% endif %}">Description</th><th class="c" style="width:8%">Qty</th><th class="r" style="width:14%">Rate</th>{% if with_tax %}<th class="r" style="width:14%">GST</th>{% endif %}<th class="r" style="width:14%">Amount</th></tr></thead><tbody>
 {% for i in doc.items %}
-<tr><td class="c">{{ loop.index }}</td><td><div class="cz-inv-item-title">{{ (i.description or i.item_name) | striptags }}</div>{% if detail %}<div class="cz-inv-item-meta">{{ detail }}</div>{% endif %}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r">{{ cz_money(i.rate) }}</td>{% if with_tax %}<td class="r">{{ cz_money((i.get("vat") or 0) * (i.qty or 1)) }}</td>{% endif %}<td class="r">{{ cz_money(i.amount) }}</td></tr>
+<tr><td class="c">{{ loop.index }}</td><td><div class="cz-inv-item-title">{{ (i.description or i.item_name) | striptags }}</div>{% if detail %}<div class="cz-inv-item-meta">{{ detail }}</div>{% endif %}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r nw">{{ cz_money(i.rate) }}</td>{% if with_tax %}<td class="r nw">{{ cz_money((i.get("vat") or 0) * (i.qty or 1)) }}</td>{% endif %}<td class="r nw">{{ cz_money(i.amount) }}</td></tr>
 {% endfor %}
-{{ m.pad([6 - (doc.items|length), 0]|max, 6 if with_tax else 5) }}
+{{ m.pad([4 - (doc.items|length), 0]|max, 6 if with_tax else 5) }}
 </tbody></table>
+<div class="cz-inv-keep">
 {% include "crown_zone_vouchers/templates/print/_inv_totals.html" %}
 {{ m.inv_payment(doc, with_tax) }}
+</div>
 {{ m.inv_frame_close() }}
