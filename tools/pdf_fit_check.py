@@ -235,8 +235,9 @@ def lint_text(text, name, doc_name):
             issues.append("date wrapped")
         if re.search(r"\d{3}-\d{2,}$", line) and re.match(r"^\d", nxt):
             issues.append("ticket no wrapped")
-    if "Ticketing" in name and doc_name and text.count(doc_name) > 1:
-        issues.append("invoice no x%d" % text.count(doc_name))
+    clean = "\n".join(ln for ln in text.splitlines() if "quote invoice" not in ln.lower())
+    if "Ticketing" in name and doc_name and clean.count(doc_name) > 1:
+        issues.append("invoice no x%d" % clean.count(doc_name))
     return sorted(set(issues))
 
 

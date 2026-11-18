@@ -4,14 +4,18 @@
 {% set with_tax = (doc.taxes|length > 0 and (doc.total_taxes_and_charges|float) > 0) %}
 {% set service = doc.cz_service_type or (v.service_type if v else "") %}
 {% set detail = "" %}
+{% set dates = "" %}
 {% if service == "Visa" and v %}
 {% set detail = "Visa: " ~ (v.cz_visa_type or "") ~ " | Destination: " ~ (v.cz_destination_country or "") ~ " | Applicants: " ~ ((v.cz_travellers|length) if v.cz_travellers else 0) %}
 {% elif service in ("Umrah", "Hajj") and v %}
-{% set detail = "Package: " ~ (v.cz_package_name or "") ~ " | Pilgrims: " ~ ((v.cz_travellers|length) if v.cz_travellers else 0) ~ " | Travel: " ~ cz_date(v.cz_travel_date) ~ " to " ~ cz_date(v.cz_return_date) %}
+{% set detail = "Package: " ~ (v.cz_package_name or "") ~ " | Pilgrims: " ~ ((v.cz_travellers|length) if v.cz_travellers else 0) %}
+{% set dates = cz_date(v.cz_travel_date) ~ " to " ~ cz_date(v.cz_return_date) %}
 {% elif service == "Tour" and v %}
-{% set detail = "Tour: " ~ (v.cz_tour_name or "") ~ " | Date: " ~ cz_date(v.cz_tour_date) ~ " | Guests: " ~ ((v.cz_total_adults or 0) + (v.cz_total_children or 0)) ~ " | Pickup: " ~ (v.cz_pickup_location or "") ~ " " ~ cz_time(v.cz_pickup_time) %}
+{% set detail = "Tour: " ~ (v.cz_tour_name or "") ~ " | Guests: " ~ ((v.cz_total_adults or 0) + (v.cz_total_children or 0)) ~ " | Pickup: " ~ (v.cz_pickup_location or "") ~ " " ~ cz_time(v.cz_pickup_time) %}
+{% set dates = cz_date(v.cz_tour_date) %}
 {% elif service == "Transport" and v %}
-{% set detail = "Service: " ~ (v.cz_transport_service or "") ~ " | Date: " ~ cz_date(v.cz_tour_date or v.cz_travel_date) %}
+{% set detail = "Service: " ~ (v.cz_transport_service or "") %}
+{% set dates = cz_date(v.cz_tour_date or v.cz_travel_date) %}
 {% endif %}
 {{ m.frame_open((doc.items|length) + 20, "cz-inv") }}
 {{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc) }}
@@ -43,7 +47,7 @@
 <div class="cz-inv-sec">{{ svc_title or service }} SERVICES &amp; CHARGES</div>
 <table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:{% if with_tax %}46%{% else %}54%{% endif %}">Description</th><th class="c" style="width:8%">Qty</th><th class="r" style="width:14%">Rate</th>{% if with_tax %}<th class="r" style="width:14%">GST</th>{% endif %}<th class="r" style="width:14%">Amount</th></tr></thead><tbody>
 {% for i in doc.items %}
-<tr><td class="c">{{ loop.index }}</td><td><div class="cz-inv-item-title">{{ (i.description or i.item_name) | striptags }}</div>{% if detail %}<div class="cz-inv-item-meta">{{ detail }}</div>{% endif %}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r nw">{{ cz_money(i.rate) }}</td>{% if with_tax %}<td class="r nw">{{ cz_money((i.get("vat") or 0) * (i.qty or 1)) }}</td>{% endif %}<td class="r nw">{{ cz_money(i.amount) }}</td></tr>
+<tr><td class="c">{{ loop.index }}</td><td><div class="cz-inv-item-title">{{ (i.description or i.item_name) | striptags }}</div>{% if detail %}<div class="cz-inv-item-meta">{{ detail }}</div>{% endif %}{% if dates %}<div class="cz-inv-item-meta nw">{{ dates }}</div>{% endif %}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r nw">{{ cz_money(i.rate) }}</td>{% if with_tax %}<td class="r nw">{{ cz_money((i.get("vat") or 0) * (i.qty or 1)) }}</td>{% endif %}<td class="r nw">{{ cz_money(i.amount) }}</td></tr>
 {% endfor %}
 {{ m.pad([4 - (doc.items|length), 0]|max, 6 if with_tax else 5) }}
 </tbody></table>

@@ -71,11 +71,7 @@
 <td class="r nw">{{ cz_money(r.amount) }}</td>
 </tr>
 {% endfor %}
-{% if loop.last and pages|length == 1 %}
-{{ m.pad([14 - (chunk|length), 0]|max, 10) }}
-{% elif loop.last and (chunk|length) < 12 %}
-{{ m.pad(12 - (chunk|length), 10) }}
-{% endif %}
+{% if loop.last %}{% set target = 0 if chunk|length >= 8 else ((14 if with_tax else 16) - (1 if tk.charges else 0)) %}{% if pages|length > 1 %}{% set target = 6 %}{% endif %}{% if target %}{{ m.pad([target - (chunk|length), 0]|max, 10) }}{% endif %}{% endif %}
 {% set ns.cum_fare = ns.cum_fare + pt.fare %}{% set ns.cum_tax = ns.cum_tax + pt.tax %}{% set ns.cum_amt = ns.cum_amt + pt.amt %}
 {% if pages|length > 1 %}
 <tr class="cztk-sum"><td colspan="7">Page Total</td><td class="r nw">{{ cz_money(pt.fare) }}</td><td class="r nw">{{ cz_money(pt.tax) }}</td><td class="r nw">{{ cz_money(pt.amt) }}</td></tr>

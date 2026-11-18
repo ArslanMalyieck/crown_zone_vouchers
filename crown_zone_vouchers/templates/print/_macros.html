@@ -55,7 +55,7 @@
 
 {% macro inv_header(title, doc) %}
 {% set b = cz_brand() %}
-{% set tsize = 15 if title|length <= 18 else 12.5 %}
+{% set tsize = 15 if title|length <= 12 else (13 if title|length <= 18 else 12) %}
 <table class="cz-inv-top"><tr>
 <td class="cz-inv-brand">
 {% if b.logo %}<img class="cz-inv-logo" src="{{ b.logo }}">{% endif %}
@@ -71,7 +71,7 @@
 <tr><td>Invoice Date</td><td><b>{{ cz_date(doc.posting_date) }}</b></td></tr>
 <tr><td>Due Date</td><td><b>{{ cz_date(doc.due_date) or "On receipt" }}</b></td></tr>
 </table></div>
-<div class="cz-inv-id-foot">Currency: <b>{{ doc.currency or "PKR" }}</b>{% if doc.cz_travel_voucher %} &nbsp;|&nbsp; Voucher: <b>{{ doc.cz_travel_voucher }}</b>{% endif %}</div>
+<div class="cz-inv-id-foot">Currency: <b>{{ doc.currency or "PKR" }}</b>{% if doc.cz_travel_voucher %}<br>Voucher: <b class="nw">{{ doc.cz_travel_voucher }}</b>{% endif %}</div>
 </td>
 </tr></table>
 <div class="cz-inv-rule"></div>
