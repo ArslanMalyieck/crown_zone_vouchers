@@ -14,7 +14,7 @@ Needs: wkhtmltopdf, pdftoppm (poppler-utils), pillow, jinja2.
 Verdict per row:  OK = 1 page and fills >= --min-fill;  SHORT = 1 page but fills less;  OVERFLOW = more than one page;
                   SLIVER = last page holds almost nothing (worst case: a lone footer/wave on page 2).
 """
-import argparse, datetime, os, subprocess, sys, types
+import argparse, datetime, os, re, subprocess, sys, types
 from unittest.mock import MagicMock
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))          # .../crown_zone_vouchers (repo root)
@@ -57,7 +57,7 @@ from crown_zone_vouchers import utils            # noqa: E402
 from crown_zone_vouchers.setup import install    # noqa: E402
 import jinja2                                    # noqa: E402
 
-TERMS = {"Airline": 7, "Hotel": 6, "Visa": 8, "Transport": 3, "Umrah": 3, "Hajj": 3, "Tour": 0}
+TERMS = {"Airline": 7, "Hotel": 6, "Visa": 8, "Transport": 3, "Umrah": 3, "Hajj": 3, "Tour": 0, "Ticketing": 7}
 D0 = datetime.date(2026, 11, 5)
 
 
@@ -111,25 +111,44 @@ def voucher(service, n):
         cz_voucher_title="Desert Safari", cz_tour_name="Desert Safari - Sharing (Land Cruiser)", cz_tour_date=D0,
         cz_pickup_location="Ibis Deira Creekside Dubai", cz_pickup_time=datetime.timedelta(hours=15),
         cz_dropoff_location="", cz_important_note="Please be ready at the pickup point 15 minutes before pickup.",
-        items=[R(ticket_no="TKT-%d" % i, cz_ticket_no="TKT-%d" % i) for i in range(1, n + 1)])
+        in_words="PKR One Hundred Thousand Only", taxes=[],
+        items=[R(ticket_no="TKT-%d" % i, cz_ticket_no="176-12345678%02d" % i, cz_passenger="Muhammad Ali Khan %d" % i,
+                 cz_flight_no="EK 60%d" % i, cz_class="Y", cz_sector="KHI-DXB", cz_travel_date=D0,
+                 description="Airline ticket %d" % i, item_name="Airline Ticket", qty=1.0,
+                 final_price=52000.0 + i, rate=49000.0 + i, amount=49000.0 + i, cz_taxes_total=3000.0,
+                 cz_tax_sp=2000.0, cz_tax_psf=1000.0, cz_tax_srb=0.0, cz_tax_rg=0.0, cz_tax_yq=0.0,
+                 cz_tax_other=0.0) for i in range(1, n + 1)])
 
 
 def invoice(service, n, with_tax):
-    items = [R(cz_passenger="Muhammad Ali Khan %d" % i, cz_ticket_no="176-12345678%02d" % i, cz_airline="Emirates",
-               cz_sector="KHI-DXB-LHR", cz_travel_date=D0, cz_hotel_city="Hilton Dubai, Dubai", cz_room_type="Deluxe",
-               cz_lead_guest="Ali Khan", cz_rooms=2, cz_nights=5, cz_unit_rate=20000.0, cz_other_fees=500.0,
-               description="Service line %d - description text" % i, item_name="Service", qty=1.0, rate=50000.0,
-               amount=50000.0 * i) for i in range(1, n + 1)]
-    taxes = [R(description="Airline Taxes (SP, YQ, YR)", rate=0, charge_type="Actual", tax_amount=1000.0),
-             R(description="Passenger Service Fee (PSF)", rate=0, charge_type="Actual", tax_amount=500.0),
-             R(description="SRB Sales Tax on PSF", rate=13, charge_type="On Previous Row Amount", tax_amount=65.0)] \
-        if with_tax else []
-    return D(name="INV-AIR-2026-00001", posting_date=D0, customer_name="ABC Enterprises (Pvt) Ltd", tax_id="1234567-8",
+    items = []
+    for i in range(1, n + 1):
+        taxes_item = 3000.0 if with_tax else 0.0
+        selling = 50000.0 + i * 5000.0
+        net = selling - taxes_item
+        items.append(R(cz_passenger="Muhammad Ali Khan %d" % i, cz_ticket_no="176-12345678%02d" % i,
+                       cz_airline="Emirates", cz_flight_no="EK 60%d" % i, cz_class="Y",
+                       cz_sector="KHI-DXB-LHR", cz_travel_date=D0, cz_hotel_city="Hilton Dubai, Dubai",
+                       cz_room_type="Deluxe", cz_lead_guest="Ali Khan", cz_rooms=2, cz_nights=5,
+                       cz_unit_rate=20000.0, cz_other_fees=500.0,
+                       description="Service line %d - description text" % i, item_name="Service", qty=1.0,
+                       final_price=selling, rate=net, amount=net, cz_taxes_total=taxes_item,
+                       cz_tax_sp=2000.0 if with_tax else 0.0, cz_tax_psf=1000.0 if with_tax else 0.0,
+                       cz_tax_srb=0.0, cz_tax_rg=0.0, cz_tax_yq=0.0, cz_tax_other=0.0))
+    if service == "Ticketing" and n >= 3:
+        items.append(R(description="Service / card charge", item_name="Service Charge", qty=2.0, rate=2500.0,
+                       amount=5000.0, final_price=5000.0, cz_taxes_total=0.0))
+    net_total = sum(i.amount for i in items)
+    tax_total = sum(i.cz_taxes_total for i in items)
+    taxes = [R(description="GST 5%", rate=5, charge_type="Actual", tax_amount=tax_total)] if tax_total else []
+    name = "INV-TKT-2026-00001" if service == "Ticketing" else "INV-AIR-2026-00001"
+    return D(name=name, posting_date=D0, customer_name="ABC Enterprises (Pvt) Ltd", tax_id="1234567-8",
              cz_travel_voucher="ATV-2026-00001", cz_service_type=service,
-             cz_invoice_tax_type="With Tax" if with_tax else "Without Tax", net_total=sum(i.amount for i in items),
-             grand_total=sum(i.amount for i in items) + (1565 if with_tax else 0),
-             total_taxes_and_charges=1565.0 if with_tax else 0, in_words="PKR One Hundred Thousand Only", items=items,
-             taxes=taxes)
+             cz_invoice_tax_type="With Tax" if with_tax else "Without Tax", net_total=net_total,
+             grand_total=net_total + tax_total, total_taxes_and_charges=tax_total,
+             in_words="PKR One Hundred Thousand Only", items=items, taxes=taxes,
+             po_no="Corporate Travel", contact_display="Ali Khan", contact_mobile="+92 300 1234567",
+             contact_email="ali.khan@abc.com", address_display="Office # 45, Clifton<br>Karachi, Pakistan")
 
 
 def make_env(V, logo):
@@ -143,7 +162,11 @@ def make_env(V, logo):
                        cz_datetime=utils.cz_datetime, cz_addr=utils.cz_addr, cz_rooms=utils.cz_rooms, cz_stay=utils.cz_stay,
                        cz_terms=lambda s: ["Term %d - sample condition text that runs over a normal line length." % i
                                            for i in range(1, TERMS.get(s, 3) + 1)],
-                       cz_user=lambda u: "User Name", cz_sector=utils.cz_sector, cz_voucher=lambda si: V)
+                       cz_user=lambda u: "User Name", cz_sector=utils.cz_sector, cz_voucher=lambda si: V,
+                       cz_address=lambda d: "Office # 45, Clifton, Karachi, Pakistan",
+                       cz_ticket_row=utils.cz_ticket_row, cz_ticket_rows=utils.cz_ticket_rows,
+                       cz_chunks=utils.cz_chunks, cz_tax_buckets=utils.cz_tax_buckets,
+                       cz_words=lambda a, c="PKR": "RUPEES %s ONLY" % utils.cz_money(a))
     return env
 
 
@@ -190,12 +213,39 @@ def measure(pdf, outprefix, margin_mm, keep, page_h_mm=297.0):
     return res
 
 
+MONTHS = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec"
+
+
+def lint_text(text, name, doc_name):
+    """Data-quality / wrapping defects visible in the rendered text."""
+    issues = []
+    if re.search(r"\bNone\b", text):
+        issues.append("literal None")
+    if "undefined" in text:
+        issues.append("undefined")
+    if "{{" in text:
+        issues.append("unrendered {{")
+    lines = [ln.rstrip() for ln in text.splitlines()]
+    for idx, line in enumerate(lines[:-1]):
+        nxt = lines[idx + 1].strip()
+        if not nxt:
+            continue
+        if re.search(r"\d{1,2}-(?:%s)-?$" % MONTHS, line) and re.match(r"^\d", nxt):
+            issues.append("date wrapped")
+        if re.search(r"\d{3}-\d{2,}$", line) and re.match(r"^\d", nxt):
+            issues.append("ticket no wrapped")
+    if "Ticketing" in name and doc_name and text.count(doc_name) > 1:
+        issues.append("invoice no x%d" % text.count(doc_name))
+    return sorted(set(issues))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default="")
     ap.add_argument("--margin", type=float, default=15.0)
     ap.add_argument("--min-fill", type=float, default=0.85)
     ap.add_argument("--png", action="store_true")
+    ap.add_argument("--lint", action="store_true")
     ap.add_argument("--logo", default="")
     a = ap.parse_args()
     out = "/tmp/cz_fit"
@@ -234,7 +284,15 @@ def main():
                 verdict = "OK" if fills[0][1] >= a.min_fill else "SHORT"
             else:
                 verdict = "SLIVER" if fills[-1][1] < 0.15 else "OVERFLOW"
-            rows.append((name, label, verdict, "pages=%d  fill=%s" % (pages, " / ".join("%d%%" % (f * 100) for _, f in fills))))
+            detail = "pages=%d  fill=%s" % (pages, " / ".join("%d%%" % (f * 100) for _, f in fills))
+            if a.lint:
+                txt = subprocess.run(["pdftotext", "-layout", pdf, "-"], capture_output=True, text=True).stdout
+                issues = lint_text(txt, name, doc.name)
+                if issues:
+                    detail += "  [" + ", ".join(issues) + "]"
+                    if verdict in ("OK", "SHORT"):
+                        verdict = "LINT"
+            rows.append((name, label, verdict, detail))
     w = max(len(r[0]) for r in rows)
     print("margin=%gmm  min-fill=%d%%" % (a.margin, a.min_fill * 100))
     for r in rows:
