@@ -9,6 +9,39 @@ ACCOUNTS_MOBILE = "+92 327 8447933"
 ACCOUNTS_EMAIL = "accounts1@zonetourism.ae"
 
 
+def _embed_logo(logo):
+    """Inline the logo as a data URI so PDFs never depend on the host / file permissions."""
+    if not logo or str(logo).startswith("data:"):
+        return logo or ""
+    key = "cz_logo_uri:%s" % logo
+    try:
+        cached = frappe.cache().get_value(key)
+        if cached:
+            return cached
+    except Exception:
+        pass
+    try:
+        import base64
+        import mimetypes
+
+        name = frappe.db.get_value("File", {"file_url": logo}, "name")
+        if not name:
+            return logo
+        f = frappe.get_doc("File", name)
+        content = f.get_content()
+        if not content:
+            return logo
+        mime = mimetypes.guess_type(f.file_name or "")[0] or "image/png"
+        uri = "data:%s;base64,%s" % (mime, base64.b64encode(content).decode())
+    except Exception:
+        return logo
+    try:
+        frappe.cache().set_value(key, uri, expires_in_sec=3600)
+    except Exception:
+        pass
+    return uri
+
+
 def cz_brand():
     """Company block shown on every voucher / invoice."""
     s = frappe.get_cached_doc("Travel Voucher Settings")
@@ -34,7 +67,7 @@ def cz_brand():
         email=s.email or "",
         website=s.website or "",
         srb=s.srb_no or "",
-        logo=logo or "",
+        logo=_embed_logo(logo),
         accounts_mobile=ACCOUNTS_MOBILE,
         accounts_email=ACCOUNTS_EMAIL,
     )

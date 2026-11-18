@@ -233,7 +233,7 @@ def lint_text(text, name, doc_name):
             continue
         if re.search(r"\d{1,2}-(?:%s)-?$" % MONTHS, line) and re.match(r"^\d", nxt):
             issues.append("date wrapped")
-        if re.search(r"\d{3}-\d{2,}$", line) and re.match(r"^\d", nxt):
+        if re.search(r"(?<![\d-])\d{3}-\d{8,}$", line) and re.match(r"^\d", nxt):
             issues.append("ticket no wrapped")
     clean = "\n".join(ln for ln in text.splitlines() if "quote invoice" not in ln.lower())
     if "Ticketing" in name and doc_name and clean.count(doc_name) > 1:

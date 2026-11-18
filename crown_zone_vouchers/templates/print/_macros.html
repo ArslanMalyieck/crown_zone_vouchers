@@ -36,9 +36,9 @@
 
 {% macro wave() %}
 <div class="cz-wave"><svg width="100%" height="34" viewBox="0 0 800 34" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M0,16 C120,40 260,0 400,16 C540,32 680,4 800,16 L800,34 L0,34 Z" fill="#0B2A55"/>
+<path d="M0,16 C120,40 260,0 400,16 C540,32 680,4 800,16 L800,34 L0,34 Z" fill="#0A2540"/>
 <path d="M0,24 C140,44 280,8 420,24 C560,40 690,14 800,26 L800,34 L0,34 Z" fill="#C9A03F"/>
-<path d="M0,30 C150,40 300,20 450,30 C600,38 700,24 800,31 L800,34 L0,34 Z" fill="#0B2A55"/>
+<path d="M0,30 C150,40 300,20 450,30 C600,38 700,24 800,31 L800,34 L0,34 Z" fill="#0A2540"/>
 </svg></div>
 {% endmacro %}
 
@@ -70,8 +70,9 @@
 <table><tr><td>Invoice No.</td><td><b>{{ doc.name }}</b></td></tr>
 <tr><td>Invoice Date</td><td><b>{{ cz_date(doc.posting_date) }}</b></td></tr>
 <tr><td>Due Date</td><td><b>{{ cz_date(doc.due_date) or "On receipt" }}</b></td></tr>
+{% if doc.cz_travel_voucher %}<tr><td>Voucher</td><td><b>{{ doc.cz_travel_voucher }}</b></td></tr>{% endif %}
 </table></div>
-<div class="cz-inv-id-foot">Currency: <b>{{ doc.currency or "PKR" }}</b>{% if doc.cz_travel_voucher %}<br>Voucher: <b class="nw">{{ doc.cz_travel_voucher }}</b>{% endif %}</div>
+<div class="cz-inv-id-foot">Currency: <b>{{ doc.currency or "PKR" }}</b></div>
 </td>
 </tr></table>
 <div class="cz-inv-rule"></div>
