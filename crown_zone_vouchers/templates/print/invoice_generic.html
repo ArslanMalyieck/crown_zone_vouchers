@@ -44,7 +44,7 @@
 {% endfor %}
 </tbody></table>
 {% endif %}
-<div class="cz-inv-sec">{{ svc_title or service }} SERVICES &amp; CHARGES</div>
+<div class="cz-inv-sec"{% if doc.items|length >= 8 %} style="page-break-before:always"{% endif %}>{{ svc_title or service }} SERVICES &amp; CHARGES</div>
 <table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:{% if with_tax %}46%{% else %}54%{% endif %}">Description</th><th class="c" style="width:8%">Qty</th><th class="r" style="width:14%">Rate</th>{% if with_tax %}<th class="r" style="width:14%">GST</th>{% endif %}<th class="r" style="width:14%">Amount</th></tr></thead><tbody>
 {% for i in doc.items %}
 <tr><td class="c">{{ loop.index }}</td><td><div class="cz-inv-item-title">{{ (i.description or i.item_name) | striptags }}</div>{% if detail %}<div class="cz-inv-item-meta">{{ detail }}</div>{% endif %}{% if dates %}<div class="cz-inv-item-meta nw">{{ dates }}</div>{% endif %}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r nw">{{ cz_money(i.rate) }}</td>{% if with_tax %}<td class="r nw">{{ cz_money((i.get("vat") or 0) * (i.qty or 1)) }}</td>{% endif %}<td class="r nw">{{ cz_money(i.amount) }}</td></tr>
