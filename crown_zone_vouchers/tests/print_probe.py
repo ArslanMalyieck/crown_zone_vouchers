@@ -81,8 +81,9 @@ def run():
     big_html = frappe.get_print("Sales Invoice", si_big.name, "CZ Invoice")
     check("big invoice paginates", "PAGE 1 OF 2" in big_html and "PAGE 2 OF 2" in big_html,
           big_html.count("PAGE "))
-    check("big invoice cumulative totals", big_html.count("Cumulative Total") == 2,
+    check("big invoice cumulative totals", big_html.count("Cumulative Total") == 1,
           big_html.count("Cumulative Total"))
+    check("big invoice page totals", big_html.count("Page Total") == 2, big_html.count("Page Total"))
     check("big invoice tax breakup", "PSF" in big_html and "SRB" in big_html)
 
     small_html = frappe.get_print("Sales Invoice", si_small.name, "CZ Invoice")
