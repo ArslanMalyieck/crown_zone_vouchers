@@ -117,12 +117,11 @@ New report: **Travel Voucher Invoice Pending**
 - Legacy site-only formats (`Sales Auditing Voucher`, `Sales Invoice Print`, `Sales Invoice Return`) were not modified or deleted.
 - Existing `Travel Sales` users need service assignments after this deployment.
 
-## Phase 5 — Item-level GST, item-driven vouchers, Ticketing
+## Phase 5 ï¿½ Item-level GST, item-driven vouchers, Ticketing
 
 ### VAT engine (crown-owned)
 
-- crown_zone_vouchers/events/vat.py implements the shaunglobal method so vouchers and their
-  invoices no longer depend on that app for GST:
+- crown_zone_vouchers/events/vat.py applies the shaunglobal-style method to voucher Sales Orders:
   - Selling Price is tax inclusive.
   - Taxable = (Selling Price - Non Taxable) / (1 + rate); VAT = Taxable x rate.
   - Item Rate = Selling Price - VAT.
@@ -130,7 +129,8 @@ New report: **Travel Voucher Invoice Pending**
     stays on the item row.
   - One row per rate; the rounding residual is absorbed so the grand total always equals the
     sum of Selling Prices (fixes the 1-paisa short totals).
-- Runs after any other app hook, on Sales Order and on voucher-linked Sales Invoice.
+- Runs after other app hooks on voucher Sales Orders only. Existing Sales Invoice calculations,
+  rates and tax rows remain with shaunglobal / ERPNext; Crown does not recalculate them.
 - Invoice Type (cz_invoice_tax_type) is now derived from the data and read-only.
 - Zero-rated services (Airline, Hotel, Ticketing) default to 0% unless a row sets its own rate.
 

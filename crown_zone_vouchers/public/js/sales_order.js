@@ -7,7 +7,8 @@ const CZ_ITEM_COLS = {
 const CZ_ITEM_ALL = ["cz_passenger", "cz_ticket_no", "cz_airline", "cz_sector", "cz_travel_date",
 	"cz_flight_no", "cz_class", "cz_hotel_city", "cz_room_type", "cz_lead_guest", "cz_rooms",
 	"cz_nights", "cz_unit_rate", "cz_other_fees"];
-const CZ_PRICING_COLS = ["final_price", "government_fee", "cz_tax_rate", "vat", "supplier", "purchase_price"];
+const CZ_EXISTING_ITEM_FIELDS = ["custom_item_code", "final_price", "government_fee", "taxed_price", "vat",
+	"supplier", "supplier_name", "purchase_price", "purchase_tax_rate"];
 const CZ_TICKET_TAX = ["cz_tax_sp", "cz_tax_rg", "cz_tax_psf", "cz_tax_srb", "cz_tax_yq", "cz_tax_other"];
 
 function cz_grid_prop(grid, fieldname, prop, value) {
@@ -28,11 +29,10 @@ window.cz_item_columns = function (frm) {
 		cz_grid_prop(grid, fn, "hidden", on ? 0 : 1);
 		cz_grid_prop(grid, fn, "in_list_view", on ? 1 : 0);
 	});
-	CZ_PRICING_COLS.forEach((fn) => cz_grid_prop(grid, fn, "hidden", service ? 0 : 1));
+	CZ_EXISTING_ITEM_FIELDS.forEach((fn) => cz_grid_prop(grid, fn, "hidden", 0));
 	CZ_TICKET_TAX.forEach((fn) => cz_grid_prop(grid, fn, "hidden", service === "Ticketing" ? 0 : 1));
 	cz_grid_prop(grid, "cz_taxes_total", "hidden", service === "Ticketing" ? 0 : 1);
-	cz_grid_prop(grid, "cz_tax_rate", "read_only", 0);
-	cz_grid_prop(grid, "tax_rate", "read_only", 1);
+	cz_grid_prop(grid, "cz_tax_rate", "hidden", service ? 0 : 1);
 	grid.reset_grid();
 };
 
@@ -145,6 +145,7 @@ frappe.ui.form.on("Sales Order", {
 		});
 	},
 	items_add(frm, cdt, cdn) {
+		if (!frm.doc.service_type) return;
 		const row = locals[cdt] && locals[cdt][cdn];
 		if (!row) return;
 		row.cz_manual = 1;
@@ -167,6 +168,7 @@ frappe.ui.form.on("Sales Order", {
 
 // ---- item row: selling price is tax inclusive (shaunglobal method)
 function cz_row_calc(frm, cdt, cdn) {
+	if (!frm.doc.service_type) return;
 	const row = locals[cdt][cdn];
 	if (!row) return;
 	const selling = flt(row.final_price) || flt(row.rate);
@@ -188,6 +190,7 @@ frappe.ui.form.on("Sales Order Item", {
 	cz_tax_rate: cz_row_calc,
 	government_fee: cz_row_calc,
 	rate(frm, cdt, cdn) {
+		if (!frm.doc.service_type) return;
 		const row = locals[cdt][cdn];
 		if (row && !flt(row.final_price)) frappe.model.set_value(cdt, cdn, "final_price", flt(row.rate));
 	},

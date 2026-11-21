@@ -30,6 +30,7 @@ def check(name, fn):
 
 CUSTOMER = ["CZ Test Customer"]
 SUPPLIER = ["CZ Test Supplier"]
+OTHER_SUPPLIER = ["CZ Other Test Supplier"]
 
 
 def ensure_party():
@@ -48,6 +49,13 @@ def ensure_party():
         doc.insert(ignore_permissions=True)
         name = doc.name
     SUPPLIER[0] = name
+    name = frappe.db.get_value("Supplier", {"supplier_name": "CZ Other Test Supplier"}, "name")
+    if not name:
+        doc = frappe.get_doc({"doctype": "Supplier", "supplier_name": "CZ Other Test Supplier",
+                              "supplier_group": frappe.db.get_value("Supplier Group", {"is_group": 0}, "name")})
+        doc.insert(ignore_permissions=True)
+        name = doc.name
+    OTHER_SUPPLIER[0] = name
 
 
 def base(service):
@@ -100,7 +108,8 @@ def payload(service):
              "purchase_price": 90000, "cz_manual": 1},
             {"item_code": "Airline Ticket", "qty": 1, "final_price": 110000, "cz_tax_rate": "5",
              "cz_passenger": "Sara Khan", "cz_ticket_no": "176-222", "cz_sector": "KHI-DXB",
-             "cz_tax_other": 1000, "supplier": SUPPLIER[0], "purchase_price": 95000, "cz_manual": 1},
+             "cz_tax_other": 1000, "supplier": OTHER_SUPPLIER[0], "purchase_price": 95000,
+             "purchase_tax_rate": "0", "cz_manual": 1},
         ])
     else:  # Umrah / Hajj
         d.update(cz_package_name="%s Gold Package" % service, cz_travel_date=add_days(t, 30),
@@ -235,13 +244,29 @@ def run():
             _assert(si.cz_invoice_tax_type == "With Tax", "GST invoice must be With Tax")
             _assert(len(si.items) == 2)
             row = [i for i in si.items if i.cz_ticket_no == "176-222"][0]
-            _assert(row.supplier == SUPPLIER[0], "item supplier must come from the voucher")
+            _assert(row.supplier == OTHER_SUPPLIER[0], "item supplier must come from its own voucher row")
+            _assert(row.purchase_tax_rate == "0", "item IP Tax Rate must come from the voucher")
             _assert(abs(flt(row.final_price) - 110000) < 0.01, "selling price must come from the voucher")
             _assert(abs(flt(si.grand_total) - 215000) < 0.01, "invoice total must match the voucher")
             html = frappe.get_print("Sales Invoice", si.name, "CZ Invoice")
             _assert("176-222" in html and "AIRLINE TICKETS" in html.upper())
             return si
         check("[Ticketing] invoice fetches items, supplier, GST + print", ticketing_invoice)
+
+        def invoice_item_edits():
+            name = frappe.db.get_value("Sales Invoice", {"cz_travel_voucher": tk, "docstatus": 0}, "name")
+            d = frappe.get_doc("Sales Invoice", name)
+            row = next(r for r in d.items if r.cz_ticket_no == "176-222")
+            row.supplier = SUPPLIER[0]
+            row.purchase_tax_rate = "5"
+            row.final_price = 120000
+            d.save()
+            d.reload()
+            row = next(r for r in d.items if r.cz_ticket_no == "176-222")
+            _assert(row.supplier == SUPPLIER[0], "invoice supplier was overwritten on save")
+            _assert(row.purchase_tax_rate == "5", "invoice IP Tax Rate was overwritten on save")
+            _assert(flt(row.final_price) == 120000, "invoice Selling Price was overwritten on save")
+        check("[Ticketing] invoice item edits survive save", invoice_item_edits)
 
         def ticketing_voucher_print():
             html = frappe.get_print("Sales Order", tk, "CZ Ticketing Voucher")
@@ -260,6 +285,30 @@ def run():
             html = frappe.get_print("Sales Invoice", si.name, "CZ Invoice")
             _assert("INVOICE" in html and "Desert Safari" in html)
         check("[Tour] invoice series INV-TUR + GST on taxable part + print", tour_invoice)
+
+        def generated_item_edits():
+            d = payload("Tour")
+            d["cz_service_lines"].append({"category": "Tour", "description": "Desert Safari - Sharing",
+                                          "qty": 1, "rate": 7000, "non_taxable_price": 1000})
+            so = frappe.get_doc(d).insert()
+            _assert(len(so.items) == 2)
+            so.items[1].purchase_tax_rate = "0"
+            so.items[1].purchase_price = 3500
+            if so.items[1].meta.has_field("supplier_name"):
+                so.items[1].supplier_name = OTHER_SUPPLIER[0]
+            else:
+                so.items[1].supplier = OTHER_SUPPLIER[0]
+            so.save()
+            _assert(so.items[1].purchase_tax_rate == "0", "Sales Order IP Tax Rate was lost on first save")
+            so.cz_service_lines[1].rate = 7100
+            so.save()
+            so.reload()
+            _assert(len(so.items) == 2, "same item at different selling prices was merged")
+            _assert(so.items[1].purchase_tax_rate == "0", "Sales Order IP Tax Rate was lost on save")
+            _assert(flt(so.items[1].purchase_price) == 3500, "Sales Order Purchase Price was lost on save")
+            _assert(so.items[1].supplier == OTHER_SUPPLIER[0], "Sales Order supplier was lost on save")
+            _assert(flt(so.items[1].final_price) == 7100, "service price change did not reach Posting")
+        check("[Tour] generated item retains supplier/IP rate when service price changes", generated_item_edits)
 
     get_data = frappe.get_attr(
         "crown_zone_vouchers.crown_zone_vouchers.report.posted_voucher_queue.posted_voucher_queue.get_data")

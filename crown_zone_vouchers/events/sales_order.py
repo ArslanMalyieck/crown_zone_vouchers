@@ -136,10 +136,16 @@ def fill_item_defaults(doc):
             row.cz_tax_rate = str(cint(rate))
         if not flt(row.get("final_price")):
             row.final_price = flt(row.get("rate"))
-        if not row.get("supplier") and doc.get("cz_supplier") and row.meta.has_field("supplier"):
+        supplier = row.get("supplier")
+        supplier_name = row.get("supplier_name")
+        if supplier_name and (not supplier or supplier == doc.get("cz_supplier")):
+            row.supplier = supplier_name
+        elif supplier and row.meta.has_field("supplier_name"):
+            row.supplier_name = supplier
+        elif not supplier and doc.get("cz_supplier") and row.meta.has_field("supplier"):
             row.supplier = doc.cz_supplier
-        if not flt(row.get("purchase_price")) and not flt(row.get("government_fee")):
-            row.purchase_price = 0
+            if row.meta.has_field("supplier_name"):
+                row.supplier_name = doc.cz_supplier
         total = sum(flt(row.get(f)) for f in ("cz_tax_sp", "cz_tax_rg", "cz_tax_psf", "cz_tax_srb",
                                               "cz_tax_yq", "cz_tax_other"))
         if row.meta.has_field("cz_taxes_total"):
@@ -271,41 +277,6 @@ def _fill_item_master(doc, rows, item_meta):
             r["custom_item_code"] = code
 
 
-def sync_items(doc):
-    """Item rows are the posting input: tab rows are rebuilt, hand-added rows are kept."""
-    st = doc.service_type
-    if not st:
-        return
-    item_meta = frappe.get_meta("Sales Order Item")
-
-    if st == "Ticketing":
-        kept = _row_dicts(doc, all_rows=True)
-        if not kept:
-            return
-        for r in kept:
-            r["cz_manual"] = 1
-        _fill_item_master(doc, kept, item_meta)
-        doc.set("items", [])
-        for r in kept:
-            doc.append("items", r)
-        return
-
-    kept = _row_dicts(doc)
-    rows = _tab_rows(doc, item_meta)
-    if not rows and not kept:
-        return
-    if rows and not all(r.get("item_code") for r in rows):
-        frappe.throw(_("Set a Default Service Item on Travel Service Type {0}.").format(st))
-    _fill_item_master(doc, rows, item_meta)
-    doc.set("items", [])
-    for r in kept:
-        doc.append("items", r)
-    for r in rows:
-        if (len(rows) == 1 and item_meta.has_field("purchase_price") and not flt(r.get("purchase_price"))):
-            r["purchase_price"] = flt(doc.get("cz_purchase_amount_pkr"))
-        doc.append("items", r)
-
-
 def _tax_fields(row, item_meta, selling, gst, non_taxable, supplier, purchase):
     if item_meta.has_field("final_price"):
         row["final_price"] = flt(selling)
@@ -317,6 +288,8 @@ def _tax_fields(row, item_meta, selling, gst, non_taxable, supplier, purchase):
         row["tax_rate"] = flt(gst)
     if item_meta.has_field("supplier") and supplier:
         row["supplier"] = supplier
+    if item_meta.has_field("supplier_name") and supplier:
+        row["supplier_name"] = supplier
     if item_meta.has_field("purchase_price"):
         row["purchase_price"] = flt(purchase)
 
@@ -373,6 +346,30 @@ def _tab_rows(doc, item_meta):
     return rows
 
 
+def _keep_auto_purchase_details(doc, rows, item_meta):
+    old_rows = [r for r in doc.get("items") or [] if not cint(r.get("cz_manual"))]
+    for row in rows:
+        matches = [r for r in old_rows if r.get("item_code") == row.get("item_code")
+                   and r.get("description") == row.get("description")]
+        old = next((r for r in matches if flt(r.get("final_price")) == flt(row.get("final_price"))), None)
+        if not old and matches:
+            old = matches[0]
+        if not old:
+            continue
+        old_rows.remove(old)
+        if old.get("purchase_tax_rate") not in (None, ""):
+            row["purchase_tax_rate"] = old.purchase_tax_rate
+        if not flt(row.get("purchase_price")) and old.get("purchase_price") not in (None, ""):
+            row["purchase_price"] = old.purchase_price
+        supplier = old.get("supplier")
+        if old.get("supplier_name") and (not supplier or supplier == doc.get("cz_supplier")):
+            supplier = old.supplier_name
+        if supplier and (not row.get("supplier") or row["supplier"] == doc.get("cz_supplier")):
+            row["supplier"] = supplier
+            if item_meta.has_field("supplier_name"):
+                row["supplier_name"] = supplier
+
+
 def sync_items(doc):
     """Item rows are the posting input: tab rows are rebuilt, hand-added rows are kept."""
     st = doc.service_type
@@ -399,6 +396,7 @@ def sync_items(doc):
     if rows and not all(r.get("item_code") for r in rows):
         frappe.throw(_("Set a Default Service Item on Travel Service Type {0}.").format(st))
     _fill_item_master(doc, rows, item_meta)
+    _keep_auto_purchase_details(doc, rows, item_meta)
     doc.set("items", [])
     for r in kept:
         doc.append("items", r)

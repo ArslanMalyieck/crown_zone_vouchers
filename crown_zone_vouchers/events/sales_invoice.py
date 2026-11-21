@@ -2,8 +2,6 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from crown_zone_vouchers.events.vat import apply_vat
-
 ACCOUNTS_ROLES = ("Travel Accounts", "Travel Manager", "Accounts Manager", "System Manager")
 DEFAULT_INV = {"Airline": "INV-AIR", "Hotel": "INV-HTL", "Visa": "INV-VISA", "Transport": "INV-TRN",
                "Umrah": "INV-UMH", "Hajj": "INV-HAJ", "Tour": "INV-TUR", "Ticketing": "INV-TKT"}
@@ -36,20 +34,25 @@ def before_insert(doc, method=None):
 
 
 def _copy_item_details(doc):
-    if not doc.get("cz_travel_voucher"):
+    if not doc.get("cz_travel_voucher") or not doc.is_new():
         return
     invoice_fields = {df.fieldname for df in frappe.get_meta("Sales Invoice Item").fields}
     order_fields = {df.fieldname for df in frappe.get_meta("Sales Order Item").fields}
     copy_fields = [f for f in COPY_ITEM_FIELDS if f in invoice_fields and f in order_fields]
+    source_fields = copy_fields + (["supplier_name"] if "supplier_name" in order_fields else [])
     for item in doc.items:
         source_name = item.get("so_detail")
         if not source_name:
             continue
-        source = frappe.db.get_value("Sales Order Item", source_name, copy_fields, as_dict=True)
+        source = frappe.db.get_value("Sales Order Item", source_name, source_fields, as_dict=True)
         if not source:
             continue
         for fieldname in copy_fields:
+            if item.get(fieldname) not in (None, ""):
+                continue
             value = source.get(fieldname)
+            if fieldname == "supplier" and not value:
+                value = source.get("supplier_name")
             if value is not None and value != "":
                 setattr(item, fieldname, value)
         if item.get("supplier") and "supplier_name" in invoice_fields and not item.get("supplier_name"):
@@ -94,12 +97,7 @@ def validate(doc, method=None):
         if dup:
             frappe.throw(_("Voucher {0} already has an active invoice {1}.").format(doc.cz_travel_voucher, dup))
 
-    if doc.get("cz_travel_voucher"):
-        for item in doc.items:
-            if not flt(item.get("final_price")):
-                item.final_price = flt(item.get("rate"))
-        apply_vat(doc, v.service_type)
-        doc.cz_invoice_tax_type = "With Tax" if (doc.get("taxes") and flt(doc.total_taxes_and_charges)) else "Without Tax"
+    doc.cz_invoice_tax_type = "With Tax" if (doc.get("taxes") and flt(doc.total_taxes_and_charges)) else "Without Tax"
 
 
 def refresh_invoice_status(voucher, exclude=None):
