@@ -16,7 +16,7 @@
 {% set cur = doc.paid_from_account_currency or doc.paid_to_account_currency or "PKR" %}
 <div class="czg">
 <table class="hdr"><tr>
-<td class="logo">{% set logo = (comp.get("custom_logo") if comp else "") or (comp.company_logo if comp else "") or b.logo %}{% if logo %}<img src="{{ logo }}">{% endif %}</td>
+<td class="logo">{% set logo = b.logo or (comp.get("custom_logo") if comp else "") or (comp.company_logo if comp else "") %}{% if logo %}<img src="{{ logo }}">{% endif %}</td>
 <td>
 <div class="co">{{ b.name }}</div>
 <div class="co-sub">{{ b.tagline or "TOURISM & TRAVELS" }}</div>
