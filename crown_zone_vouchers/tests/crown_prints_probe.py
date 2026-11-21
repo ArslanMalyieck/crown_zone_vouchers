@@ -58,7 +58,7 @@ def run():
         try:
             from frappe.utils.pdf import get_pdf
             html = _render("Sales Invoice", invoices[0], "Crown Sales Invoice")
-            pdf = get_pdf(html, {"load-error-handling": "ignore"})
+            pdf = get_pdf(html, {"load-error-handling": "ignore", "load-media-error-handling": "ignore"})
             with open(os.path.join(OUT, "crown_sales_invoice.pdf"), "wb") as fh:
                 fh.write(pdf)
             check("Crown Sales Invoice pdf", len(pdf) > 10000, len(pdf))
