@@ -53,10 +53,8 @@
 
 <div class="sec">Payment Details</div>
 <table class="tbl"><tbody>
-<tr><td style="width:32%"><b>{{ "Amount Received" if is_receive else "Amount Paid" }} ({{ cur }})</b></td><td class="r" style="width:18%;font-size:13px;font-weight:bold;color:#0B1F4B">{{ doc.get_formatted("paid_amount") }}</td><td style="width:32%"><b>Unallocated Amount</b></td><td class="r" style="width:18%">{{ doc.get_formatted("unallocated_amount") }}</td></tr>
-<tr><td><b>Paid From Account</b></td><td colspan="3" class="small">{{ doc.paid_from or "" }}</td></tr>
-<tr><td><b>Paid To Account</b></td><td colspan="3" class="small">{{ doc.paid_to or "" }}</td></tr>
-{% if doc.remarks %}<tr><td><b>Remarks</b></td><td colspan="3" class="small">{{ doc.remarks }}</td></tr>{% endif %}
+<tr><td style="width:40%"><b>{{ "Amount Received" if is_receive else "Amount Paid" }} ({{ cur }})</b></td><td class="r" style="width:60%;font-size:14px;font-weight:bold;color:#0B1F4B">{{ doc.get_formatted("paid_amount") }}</td></tr>
+{% if doc.remarks %}<tr><td><b>Remarks</b></td><td class="small">{{ doc.remarks }}</td></tr>{% endif %}
 </tbody></table>
 
 {% if doc.references %}
@@ -72,7 +70,6 @@
 
 <div class="tot"><table>
 <tr><td class="k">Total Allocated</td><td class="n">{{ frappe.utils.fmt_money(doc.total_allocated_amount, currency=cur) }}</td></tr>
-<tr><td class="k">Unallocated</td><td class="n">{{ frappe.utils.fmt_money(doc.unallocated_amount, currency=cur) }}</td></tr>
 <tr class="grand"><td class="k">{{ "Total Received" if is_receive else "Total Paid" }} ({{ cur }})</td><td class="n">{{ doc.get_formatted("paid_amount") }}</td></tr>
 </table></div>
 
@@ -81,8 +78,7 @@
 
 <table class="sign"><tr>
 <td><b>Prepared By</b>{{ cz_user(doc.owner) }}</td>
-<td><b>Checked By</b>&nbsp;</td>
-<td><b>{{ "Received By" if is_receive else "Authorised Signatory" }}</b>&nbsp;</td>
+<td colspan="2" style="text-align:right"><b>Computer Generated Voucher</b>No signature required</td>
 </tr></table>
 
 <table class="foot"><tr>
