@@ -5,7 +5,7 @@
 {% set is_receive = doc.payment_type == "Receive" %}
 {% set title = ("CASH " if is_cash else "BANK ") ~ ("RECEIPT VOUCHER" if is_receive else "PAYMENT VOUCHER") %}
 {% set party = None %}
-{% if doc.party and doc.party_type in ("Customer", "Supplier") %}
+{% if doc.party and doc.party_type in ("Customer", "Supplier") and frappe.db.exists(doc.party_type, doc.party) %}
 {% set party = frappe.get_doc(doc.party_type, doc.party) %}
 {% endif %}
 {% set addr_name = doc.get("party_address") %}

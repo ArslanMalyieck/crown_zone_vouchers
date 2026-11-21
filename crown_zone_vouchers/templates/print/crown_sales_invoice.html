@@ -70,7 +70,7 @@
 <div class="words"><b>Amount in words:</b> {{ doc.in_words or cz_words(doc.grand_total, cur) }}</div>
 
 {% set bank_acc = frappe.db.get_value("Company", doc.company, "default_bank_account") if doc.company else None %}
-{% if bank_acc %}
+{% if bank_acc and frappe.db.exists("Bank Account", bank_acc) %}
 {% set ba = frappe.get_doc("Bank Account", bank_acc) %}
 <div class="bank"><b>Bank Details:</b> {{ ba.get("bank") or "" }} &nbsp;|&nbsp; A/C Title: {{ ba.get("account_name") or doc.company }} &nbsp;|&nbsp; A/C No: {{ ba.get("bank_account_no") or ba.get("iban") or "" }}</div>
 {% endif %}
