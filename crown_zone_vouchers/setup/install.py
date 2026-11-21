@@ -306,6 +306,14 @@ def _inc(tpl):
     return '{%% include "%s%s" %%}' % (INC, tpl)
 
 
+CROWN_PRINTS = [
+    ("Crown Payment Voucher", "Payment Entry", "crown_payment_voucher.html"),
+    ("Crown Sales Invoice", "Sales Invoice", "crown_sales_invoice.html"),
+    ("Crown Sales Order Voucher", "Sales Order", "crown_sales_order_voucher.html"),
+]
+CROWN_PRINT_NAMES = {name for name, _dt, _tpl in CROWN_PRINTS}
+
+
 def print_format_defs():
     defs = []
     for name, tpl, pre in VOUCHERS:
@@ -335,14 +343,16 @@ def print_format_defs():
             "if" if i == 0 else "elif", svc, title, _inc(tpl)))
     s.append("{% else %}{% set svc_title = \"\" %}" + _inc("invoice_generic.html") + "{% endif %}")
     defs.append(("CZ Invoice", "Sales Invoice", "\n".join(s)))
+    for name, doctype, tpl in CROWN_PRINTS:
+        defs.append((name, doctype, _inc(tpl)))
     return defs
 
 
 def create_print_formats(force=False):
     for name, doctype, html in print_format_defs():
         exists = frappe.db.exists("Print Format", name)
-        # dispatchers are app-managed: always refresh so new services (e.g. Tour) are picked up on migrate
-        if exists and not force and name not in ("CZ Voucher", "CZ Invoice"):
+        # dispatchers and Crown prints are app-managed: always refresh on migrate
+        if exists and not force and name not in ({"CZ Voucher", "CZ Invoice"} | CROWN_PRINT_NAMES):
             continue
         doc = frappe.get_doc("Print Format", name) if exists else frappe.new_doc("Print Format")
         doc.update({"name": name, "doc_type": doctype, "print_format_type": "Jinja", "custom_format": 1,

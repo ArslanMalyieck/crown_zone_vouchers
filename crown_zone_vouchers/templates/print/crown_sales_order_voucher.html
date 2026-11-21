@@ -1,0 +1,147 @@
+{% include "crown_zone_vouchers/templates/print/_crown_style.html" %}
+{% set b = cz_brand() %}
+{% set comp = frappe.get_doc("Company", doc.company) if doc.company else None %}
+{% set st = doc.service_type or "Sales" %}
+{% set travellers = doc.get("cz_travellers") or [] %}
+<div class="czg">
+<table class="hdr"><tr>
+<td class="logo">{% set logo = (comp.get("custom_logo") if comp else "") or (comp.company_logo if comp else "") or b.logo %}{% if logo %}<img src="{{ logo }}">{% endif %}</td>
+<td>
+<div class="co">{{ b.name }}</div>
+<div class="co-sub">{{ b.tagline or "TOURISM & TRAVELS" }}</div>
+<div class="co-meta">{{ b.address }}<br>{{ b.ptcl }}{% if b.mobile %} &nbsp;|&nbsp; {{ b.mobile }}{% endif %} &nbsp;|&nbsp; {{ b.email }}{% if b.srb %}<br>SRB No: {{ b.srb }}{% endif %}</div>
+</td>
+<td style="width:28%;text-align:right;vertical-align:middle"><div class="badge">{{ st|upper }} VOUCHER<small>{{ doc.name }}</small></div></td>
+</tr></table>
+
+<table class="cards"><tr>
+<td>
+<div class="kicker">Customer</div>
+<div class="party">{{ doc.customer_name or doc.customer }}</div>
+<div class="small">{{ cz_addr(doc.address_display) }}{% if doc.contact_display %}<br>{{ doc.contact_display }}{% endif %}{% if doc.contact_mobile %} &nbsp;|&nbsp; {{ doc.contact_mobile }}{% endif %}{% if doc.contact_email %}<br>{{ doc.contact_email }}{% endif %}</div>
+</td>
+<td class="gap"></td>
+<td>
+<div class="kicker">Booking</div>
+<div class="party">{{ doc.cz_lead_guest or doc.contact_display or doc.customer_name }}</div>
+<div class="small">Reference: {{ doc.cz_booking_reference or doc.po_no or "" }}<br>Status: {{ doc.cz_booking_status or "" }}<br>Booking Date: {{ cz_date(doc.cz_booking_date or doc.transaction_date) }}</div>
+</td>
+</tr></table>
+
+<table class="meta">
+<tr><td class="l">Voucher No.</td><td class="v"><b>{{ doc.name }}</b></td><td class="l">Booking Date</td><td class="v">{{ cz_date(doc.cz_booking_date or doc.transaction_date) }}</td></tr>
+<tr><td class="l">Service</td><td class="v">{{ st }}</td><td class="l">Booking Status</td><td class="v">{{ doc.cz_booking_status or "" }}</td></tr>
+<tr><td class="l">Supplier Conf.</td><td class="v">{{ doc.cz_supplier_confirmation_no or "" }}</td><td class="l">Contact</td><td class="v">{{ doc.cz_contact_whatsapp or doc.contact_mobile or "" }}</td></tr>
+</table>
+
+{% if travellers %}
+<div class="sec">Passengers / Guests</div>
+<table class="tbl"><thead><tr><th style="width:4%">#</th><th style="width:30%">Name</th><th style="width:12%">Type</th><th style="width:18%">Passport No.</th><th style="width:16%">Nationality</th><th style="width:20%">Passport Expiry</th></tr></thead><tbody>
+{% for t in travellers %}
+<tr><td class="c">{{ loop.index }}</td><td>{{ t.traveller_name or "" }}</td><td>{{ t.traveller_type or "" }}</td><td class="nw">{{ t.passport_no or "" }}</td><td>{{ t.nationality or "" }}</td><td class="nw">{{ cz_date(t.passport_expiry) }}</td></tr>
+{% endfor %}
+</tbody></table>
+{% endif %}
+
+{% if st == "Airline" and doc.get("cz_air_tickets") %}
+<div class="sec">Ticket Details</div>
+<table class="tbl"><thead><tr><th style="width:4%">#</th><th style="width:28%">Passenger</th><th style="width:18%">Airline</th><th style="width:16%">PNR</th><th style="width:20%">Ticket No.</th><th style="width:14%">Issue Date</th></tr></thead><tbody>
+{% for t in doc.cz_air_tickets %}
+<tr><td class="c">{{ loop.index }}</td><td>{{ t.passenger_name or "" }}</td><td>{{ t.airline or "" }}</td><td>{{ t.pnr or "" }}</td><td class="nw">{{ t.ticket_no or "" }}</td><td class="nw">{{ cz_date(t.ticket_date) }}</td></tr>
+{% endfor %}
+</tbody></table>
+{% endif %}
+
+{% if st == "Ticketing" and doc.items %}
+<div class="sec">Ticket Details</div>
+<table class="tbl"><thead><tr><th style="width:4%">#</th><th style="width:24%">Passenger</th><th style="width:18%">Ticket No.</th><th style="width:12%">Flight</th><th style="width:8%">Class</th><th style="width:22%">Sector</th><th style="width:12%">Date</th></tr></thead><tbody>
+{% for i in doc.items %}
+{% if i.get("cz_ticket_no") or i.get("cz_passenger") %}
+<tr><td class="c">{{ loop.index }}</td><td>{{ i.get("cz_passenger") or "" }}</td><td class="nw">{{ i.get("cz_ticket_no") or "" }}</td><td>{{ i.get("cz_flight_no") or i.get("cz_airline") or "" }}</td><td class="c">{{ i.get("cz_class") or "" }}</td><td>{{ i.get("cz_sector") or "" }}</td><td class="nw">{{ cz_date(i.get("cz_travel_date")) }}</td></tr>
+{% endif %}
+{% endfor %}
+</tbody></table>
+{% endif %}
+
+{% if doc.get("cz_flight_segments") %}
+<div class="sec">Flight Itinerary</div>
+<table class="tbl"><thead><tr><th style="width:4%">#</th><th>From</th><th>To</th><th>Flight</th><th>Class</th><th>Travel Date</th><th>Departure</th><th>Arrival</th></tr></thead><tbody>
+{% for s in doc.cz_flight_segments %}
+<tr><td class="c">{{ loop.index }}</td><td>{{ s.sector_from or "" }}</td><td>{{ s.sector_to or "" }}</td><td>{{ s.flight_no or "" }}</td><td>{{ s.cabin_class or "" }}</td><td class="nw">{{ cz_date(s.travel_date) }}</td><td class="nw">{{ cz_time(s.departure_time) }}</td><td class="nw">{{ cz_time(s.arrival_time) }}</td></tr>
+{% endfor %}
+</tbody></table>
+{% endif %}
+
+{% if st == "Hotel" %}
+<div class="sec">Hotel Details</div>
+<table class="tbl"><tbody>
+<tr><td style="width:22%"><b>Hotel</b></td><td>{{ doc.cz_hotel_name or "" }}</td><td style="width:18%"><b>City / Country</b></td><td>{{ doc.cz_hotel_city_country or "" }}</td></tr>
+<tr><td><b>Check-in</b></td><td>{{ cz_date(doc.cz_check_in) }}</td><td><b>Check-out</b></td><td>{{ cz_date(doc.cz_check_out) }} ({{ doc.cz_total_nights or 0 }} nights)</td></tr>
+<tr><td><b>Hotel Address</b></td><td colspan="3">{{ doc.cz_hotel_address or "" }}</td></tr>
+</tbody></table>
+{% endif %}
+
+{% if doc.get("cz_hotel_stays") and (st != "Hotel" or doc.cz_hotel_stays|length > 1) %}
+<div class="sec">Accommodation</div>
+<table class="tbl"><thead><tr><th>Hotel</th><th>City</th><th>Check-in</th><th>Check-out</th><th class="c">Nights</th><th class="c">Rooms</th><th>Room Type</th><th>Meal</th></tr></thead><tbody>
+{% for h in doc.cz_hotel_stays %}
+<tr><td>{{ h.hotel_name or doc.cz_hotel_name or "" }}</td><td>{{ h.city or "" }}</td><td class="nw">{{ cz_date(h.check_in) }}</td><td class="nw">{{ cz_date(h.check_out) }}</td><td class="c">{{ h.nights or "" }}</td><td class="c">{{ h.rooms or "" }}</td><td>{{ h.room_type or "" }}</td><td>{{ h.meal_plan or "" }}</td></tr>
+{% endfor %}
+</tbody></table>
+{% endif %}
+
+{% if st == "Visa" %}
+<div class="sec">Visa Details</div>
+<table class="tbl"><tbody>
+<tr><td style="width:22%"><b>Visa Type</b></td><td>{{ doc.cz_visa_type or "" }}</td><td style="width:18%"><b>Destination</b></td><td>{{ doc.cz_destination_country or "" }}</td></tr>
+<tr><td><b>Processing</b></td><td>{{ doc.cz_processing_country or "" }} / {{ doc.cz_embassy_center or "" }}</td><td><b>Expected Travel</b></td><td>{{ cz_date(doc.cz_expected_travel_date) }}</td></tr>
+<tr><td><b>Application Ref.</b></td><td>{{ doc.cz_application_ref or "" }}</td><td><b>Status</b></td><td>{{ doc.cz_visa_status or "" }}</td></tr>
+</tbody></table>
+{% endif %}
+
+{% if st == "Transport" and doc.get("cz_trips") %}
+<div class="sec">Transport Itinerary</div>
+<table class="tbl"><thead><tr><th style="width:4%">#</th><th style="width:18%">Date / Time</th><th>Pickup</th><th>Drop-off</th><th style="width:15%">Vehicle</th><th class="c" style="width:7%">Pax</th></tr></thead><tbody>
+{% for t in doc.cz_trips %}
+<tr><td class="c">{{ loop.index }}</td><td class="nw">{{ cz_datetime(t.pickup_datetime) }}</td><td>{{ t.pickup_location or "" }}</td><td>{{ t.dropoff_location or "" }}</td><td>{{ t.vehicle_type or "" }} {{ t.plate_no or "" }}</td><td class="c">{{ t.passengers or "" }}</td></tr>
+{% endfor %}
+</tbody></table>
+{% endif %}
+
+{% if st in ("Umrah", "Hajj") %}
+<div class="sec">Package Details</div>
+<table class="tbl"><tbody>
+<tr><td style="width:20%"><b>Package</b></td><td>{{ doc.cz_package_name or "" }}</td><td style="width:16%"><b>Travel Dates</b></td><td>{{ cz_date(doc.cz_travel_date) }} to {{ cz_date(doc.cz_return_date) }}</td></tr>
+<tr><td><b>Departure</b></td><td>{{ doc.cz_departure_city or "" }}</td><td><b>Room Sharing</b></td><td>{{ doc.cz_room_sharing or "" }}</td></tr>
+<tr><td><b>Inclusions</b></td><td colspan="3">{{ doc.cz_inclusions or "" }}</td></tr>
+{% if doc.cz_exclusions %}<tr><td><b>Exclusions</b></td><td colspan="3">{{ doc.cz_exclusions }}</td></tr>{% endif %}
+</tbody></table>
+{% endif %}
+
+{% if st == "Tour" %}
+<div class="sec">Tour Details</div>
+<table class="tbl"><tbody>
+<tr><td style="width:20%"><b>Tour</b></td><td>{{ doc.cz_tour_name or "" }}</td><td style="width:16%"><b>Tour Date</b></td><td>{{ cz_date(doc.cz_tour_date) }}</td></tr>
+<tr><td><b>Pickup</b></td><td>{{ doc.cz_pickup_location or "" }} {{ cz_time12(doc.cz_pickup_time) }}</td><td><b>Drop-off</b></td><td>{{ doc.cz_dropoff_location or "" }}</td></tr>
+<tr><td><b>Guests</b></td><td colspan="3">{{ (doc.cz_total_adults or 0) }} Adults, {{ (doc.cz_total_children or 0) }} Children</td></tr>
+</tbody></table>
+{% endif %}
+
+{% if doc.cz_customer_remarks %}<div class="note"><b>Remarks:</b> {{ doc.cz_customer_remarks }}</div>{% endif %}
+{% if doc.cz_important_note %}<div class="note"><b>Important:</b> {{ doc.cz_important_note }}</div>{% endif %}
+
+{% set terms = cz_terms(doc.service_type) %}
+{% if terms %}<div class="terms"><b>Terms &amp; Conditions</b><ol>{% for t in terms %}<li>{{ t }}</li>{% endfor %}</ol></div>{% endif %}
+
+<table class="sign"><tr>
+<td><b>Prepared By</b>{{ cz_user(doc.cz_prepared_by or doc.owner) }}</td>
+<td><b>Checked By</b>&nbsp;</td>
+<td><b>Customer Signature</b>&nbsp;</td>
+</tr></table>
+
+<table class="foot"><tr>
+<td><span class="k">Web</span>{{ b.website or (comp.website if comp and comp.website else b.email) }}</td>
+<td class="c"><span class="k">Email</span>{{ b.email }}</td>
+<td class="r"><span class="k">Tel</span>{{ b.mobile or b.ptcl }}</td>
+</tr></table>
+</div>
