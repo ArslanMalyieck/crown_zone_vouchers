@@ -5,6 +5,8 @@ Run on a test site:
 """
 import os
 
+import re
+
 import frappe
 
 OUT = "/home/frappe/print_tests"
@@ -58,6 +60,7 @@ def run():
         try:
             from frappe.utils.pdf import get_pdf
             html = _render("Sales Invoice", invoices[0], "Crown Sales Invoice")
+            html = re.sub(r"<img[^>]+>", "", html)
             pdf = get_pdf(html, {"load-error-handling": "ignore", "load-media-error-handling": "ignore"})
             with open(os.path.join(OUT, "crown_sales_invoice.pdf"), "wb") as fh:
                 fh.write(pdf)
