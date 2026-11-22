@@ -1,7 +1,7 @@
 {% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
 {% include "crown_zone_vouchers/templates/print/_css.html" %}
 {% set v = cz_voucher(doc) %}
-{% set with_tax = (doc.taxes|length > 0 and (doc.total_taxes_and_charges|float) > 0) %}
+{% if with_tax is not defined %}{% set with_tax = (doc.taxes|length > 0 and (doc.total_taxes_and_charges|float) > 0) %}{% endif %}
 {% set tickets = doc.items or [] %}
 {% set pax = tickets | map(attribute='cz_passenger') | select | unique | list %}
 {% set airlines = tickets | map(attribute='cz_airline') | select | unique | list %}
@@ -18,12 +18,13 @@
  ("Sector(s)", sector_txt)
 ]) }}
 <div class="cz-inv-sec">AIRLINE TICKET DETAILS</div>
-<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:20%">Passenger</th><th style="width:15%">Ticket No.</th><th style="width:12%">Airline</th><th style="width:13%">Sector</th><th style="width:11%">Travel Date</th><th class="r" style="width:8%">Fare</th><th class="r" style="width:8%">Taxes</th><th class="r" style="width:9%">Amount</th></tr></thead><tbody>
+<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:{% if with_tax %}20%{% else %}30%{% endif %}">Passenger</th><th style="width:15%">Ticket No.</th><th style="width:12%">Airline</th><th style="width:13%">Sector</th><th style="width:11%">Travel Date</th>{% if with_tax %}<th class="r" style="width:8%">Fare</th><th class="r" style="width:8%">Taxes</th>{% endif %}<th class="r" style="width:9%">Amount</th></tr></thead><tbody>
 {% for i in tickets %}
 {% set tr = cz_ticket_row(i) %}
-<tr><td class="c">{{ loop.index }}</td><td>{{ i.cz_passenger or (i.description or i.item_name) | striptags }}</td><td class="nw">{{ i.cz_ticket_no or "" }}</td><td>{{ i.cz_airline or "" }}</td><td>{{ i.cz_sector or "" }}</td><td class="nw">{{ cz_date(i.cz_travel_date) }}</td><td class="r nw">{{ cz_money(tr.fare) }}</td><td class="r nw">{{ cz_money(tr.taxes) }}</td><td class="r nw">{{ cz_money(tr.amount) }}</td></tr>
+{% set nm = ((i.get("full_name") or "") ~ " " ~ (i.get("middle_name") or "") ~ " " ~ (i.get("last_name") or "")).strip() %}
+<tr><td class="c">{{ loop.index }}</td><td>{{ i.cz_passenger or (i.description or i.item_name) | striptags }}{% if nm or i.get("country") or i.get("passport") or i.get("remarks") %}<div class="cz-inv-item-meta">{% if nm and nm != (i.cz_passenger or "") %}{{ nm }}{% endif %}{% if i.get("country") %} &nbsp;|&nbsp; {{ i.get("country") }}{% endif %}{% if i.get("passport") %} &nbsp;|&nbsp; {{ i.get("passport") }}{% endif %}{% if i.get("remarks") %}<br>{{ i.get("remarks") }}{% endif %}</div>{% endif %}</td><td class="nw">{{ i.cz_ticket_no or "" }}</td><td>{{ i.cz_airline or "" }}</td><td>{{ i.cz_sector or "" }}</td><td class="nw">{{ cz_date(i.cz_travel_date) }}</td>{% if with_tax %}<td class="r nw">{{ cz_money(tr.fare) }}</td><td class="r nw">{{ cz_money(tr.taxes) }}</td>{% endif %}<td class="r nw">{{ cz_money(tr.amount) }}</td></tr>
 {% endfor %}
-{{ m.pad([4 - (tickets|length), 0]|max, 9) }}
+{{ m.pad([4 - (tickets|length), 0]|max, 9 if with_tax else 7) }}
 </tbody></table>
 {% if v and v.cz_flight_segments %}
 <div class="cz-inv-sec" style="margin-top:6px">FLIGHT ITINERARY</div>
@@ -36,6 +37,5 @@
 <div class="cz-inv-keep">
 {% set total_label = "Ticket Amount" %}{% set grand_label = "GRAND TOTAL PAYABLE" %}
 {% include "crown_zone_vouchers/templates/print/_inv_totals.html" %}
-{{ m.inv_payment(doc, with_tax) }}
 </div>
-{{ m.inv_frame_close() }}
+{{ m.inv_footer_close(doc, with_tax) }}

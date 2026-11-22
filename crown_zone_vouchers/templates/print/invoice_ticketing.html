@@ -1,7 +1,7 @@
 {% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
 {% include "crown_zone_vouchers/templates/print/_css.html" %}
 {% set v = cz_voucher(doc) %}
-{% set with_tax = (doc.taxes|length > 0 and (doc.total_taxes_and_charges|float) > 0) %}
+{% if with_tax is not defined %}{% set with_tax = (doc.taxes|length > 0 and (doc.total_taxes_and_charges|float) > 0) %}{% endif %}
 {% set tk = cz_ticket_rows(doc.items) %}
 {% set pages = cz_chunks(tk.tickets) %}
 {% set buckets = cz_tax_buckets(tk.tickets) %}
@@ -36,9 +36,9 @@
 {% if not pages %}
 <div class="cztk-page">
 <div class="cz-inv-sec">SERVICE &amp; OTHER CHARGES</div>
-<table class="cz-inv-tbl"><thead><tr><th style="width:6%">#</th><th>Description</th><th class="c" style="width:8%">Qty</th><th class="r" style="width:14%">Rate</th><th class="r" style="width:16%">Amount ({{ doc.currency or "PKR" }})</th></tr></thead><tbody>
+<table class="cz-inv-tbl"><thead><tr><th style="width:6%">#</th><th>Description</th><th class="c" style="width:8%">Qty</th>{% if with_tax %}<th class="r" style="width:14%">Rate</th>{% endif %}<th class="r" style="width:{% if with_tax %}16%{% else %}22%{% endif %}">Amount ({{ doc.currency or "PKR" }})</th></tr></thead><tbody>
 {% for i in tk.charges %}
-<tr><td class="c">{{ loop.index }}</td><td>{{ (i.description or i.item_name) | striptags }}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r nw">{{ cz_money(i.rate) }}</td><td class="r nw">{{ cz_money(i.amount or (i.rate * (i.qty or 1))) }}</td></tr>
+<tr><td class="c">{{ loop.index }}</td><td>{{ (i.description or i.item_name) | striptags }}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td>{% if with_tax %}<td class="r nw">{{ cz_money(i.rate) }}</td>{% endif %}<td class="r nw">{{ cz_money((i.amount or (i.rate * (i.qty or 1))) if with_tax else ((i.get("final_price") or i.rate or 0) * (i.qty or 1))) }}</td></tr>
 {% endfor %}
 </tbody></table>
 </div>
@@ -52,31 +52,32 @@
 <table class="cz-inv-tbl"><thead><tr>
 <th style="width:4%">#</th><th style="width:18%">Passenger Name</th><th style="width:14%">Ticket No.</th>
 <th style="width:9%">Flight</th><th style="width:5%">CL</th><th style="width:9%">Dep Date</th>
-<th style="width:14%">Sector</th><th class="r" style="width:9%">Fare</th><th class="r" style="width:9%">Taxes</th>
-<th class="r" style="width:9%">Amount ({{ doc.currency or "PKR" }})</th>
+<th style="width:14%">Sector</th>{% if with_tax %}<th class="r" style="width:9%">Fare</th><th class="r" style="width:9%">Taxes</th>{% endif %}
+<th class="r" style="width:{% if with_tax %}9%{% else %}14%{% endif %}">Amount ({{ doc.currency or "PKR" }})</th>
 </tr></thead><tbody>
 {% for i in chunk %}
 {% set r = cz_ticket_row(i) %}
 {% set pt.fare = pt.fare + r.fare %}{% set pt.tax = pt.tax + r.taxes %}{% set pt.amt = pt.amt + r.amount %}
 <tr>
 <td class="c">{{ loop.index }}</td>
-<td>{{ i.cz_passenger or "" }}</td>
+{% set nm = ((i.get("full_name") or "") ~ " " ~ (i.get("middle_name") or "") ~ " " ~ (i.get("last_name") or "")).strip() %}
+<td>{{ i.cz_passenger or "" }}{% if nm or i.get("country") or i.get("passport") or i.get("remarks") %}<div class="cz-inv-item-meta">{% if nm and nm != (i.cz_passenger or "") %}{{ nm }}{% endif %}{% if i.get("country") %} &nbsp;|&nbsp; {{ i.get("country") }}{% endif %}{% if i.get("passport") %} &nbsp;|&nbsp; {{ i.get("passport") }}{% endif %}{% if i.get("remarks") %}<br>{{ i.get("remarks") }}{% endif %}</div>{% endif %}</td>
 <td class="nw">{{ i.cz_ticket_no or "" }}</td>
 <td>{{ i.cz_flight_no or i.cz_airline or "" }}</td>
 <td class="c">{{ i.cz_class or "" }}</td>
 <td class="nw">{{ cz_date(i.cz_travel_date) }}</td>
 <td>{{ i.cz_sector or "" }}</td>
-<td class="r nw">{{ cz_money(r.fare) }}</td>
-<td class="r nw">{{ cz_money(r.taxes) }}</td>
+{% if with_tax %}<td class="r nw">{{ cz_money(r.fare) }}</td>
+<td class="r nw">{{ cz_money(r.taxes) }}</td>{% endif %}
 <td class="r nw">{{ cz_money(r.amount) }}</td>
 </tr>
 {% endfor %}
 {% if loop.last %}{% set base = 0 if chunk|length >= 8 else (18 if chunk|length <= 2 else 14) %}{% set target = base - (1 if tk.charges else 0) %}{% if pages|length > 1 %}{% set target = 6 %}{% endif %}{% if target %}{{ m.pad([target - (chunk|length), 0]|max, 10) }}{% endif %}{% endif %}
 {% set ns.cum_fare = ns.cum_fare + pt.fare %}{% set ns.cum_tax = ns.cum_tax + pt.tax %}{% set ns.cum_amt = ns.cum_amt + pt.amt %}
 {% if pages|length > 1 %}
-<tr class="cztk-sum"><td colspan="7">Page Total</td><td class="r nw">{{ cz_money(pt.fare) }}</td><td class="r nw">{{ cz_money(pt.tax) }}</td><td class="r nw">{{ cz_money(pt.amt) }}</td></tr>
+<tr class="cztk-sum"><td colspan="{{ 7 if with_tax else 5 }}">Page Total</td>{% if with_tax %}<td class="r nw">{{ cz_money(pt.fare) }}</td><td class="r nw">{{ cz_money(pt.tax) }}</td>{% endif %}<td class="r nw">{{ cz_money(pt.amt) }}</td></tr>
 {% if loop.index > 1 %}
-<tr class="cztk-sum"><td colspan="7">Cumulative Total</td><td class="r nw">{{ cz_money(ns.cum_fare) }}</td><td class="r nw">{{ cz_money(ns.cum_tax) }}</td><td class="r nw">{{ cz_money(ns.cum_amt) }}</td></tr>
+<tr class="cztk-sum"><td colspan="{{ 7 if with_tax else 5 }}">Cumulative Total</td>{% if with_tax %}<td class="r nw">{{ cz_money(ns.cum_fare) }}</td><td class="r nw">{{ cz_money(ns.cum_tax) }}</td>{% endif %}<td class="r nw">{{ cz_money(ns.cum_amt) }}</td></tr>
 {% endif %}
 {% endif %}
 </tbody></table>
@@ -85,9 +86,9 @@
 <div class="cz-inv-keep">
 {% if tk.charges and pages %}
 <div class="cz-inv-sec" style="margin-top:6px">SERVICE &amp; OTHER CHARGES</div>
-<table class="cz-inv-tbl"><thead><tr><th style="width:6%">#</th><th>Description</th><th class="c" style="width:8%">Qty</th><th class="r" style="width:14%">Rate</th><th class="r" style="width:16%">Amount ({{ doc.currency or "PKR" }})</th></tr></thead><tbody>
+<table class="cz-inv-tbl"><thead><tr><th style="width:6%">#</th><th>Description</th><th class="c" style="width:8%">Qty</th>{% if with_tax %}<th class="r" style="width:14%">Rate</th>{% endif %}<th class="r" style="width:{% if with_tax %}16%{% else %}22%{% endif %}">Amount ({{ doc.currency or "PKR" }})</th></tr></thead><tbody>
 {% for i in tk.charges %}
-<tr><td class="c">{{ loop.index }}</td><td>{{ (i.description or i.item_name) | striptags }}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td><td class="r nw">{{ cz_money(i.rate) }}</td><td class="r nw">{{ cz_money(i.amount or (i.rate * (i.qty or 1))) }}</td></tr>
+<tr><td class="c">{{ loop.index }}</td><td>{{ (i.description or i.item_name) | striptags }}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td>{% if with_tax %}<td class="r nw">{{ cz_money(i.rate) }}</td>{% endif %}<td class="r nw">{{ cz_money((i.amount or (i.rate * (i.qty or 1))) if with_tax else ((i.get("final_price") or i.rate or 0) * (i.qty or 1))) }}</td></tr>
 {% endfor %}
 </tbody></table>
 {% endif %}
@@ -99,16 +100,12 @@
 {% endif %}
 
 <table class="cz-inv-totals">
-<tr class="sub"><td class="k">Subtotal (excl. GST)</td><td class="n">{{ cz_money(doc.net_total) }}</td></tr>
-{% for tx in doc.taxes %}
-<tr class="tax"><td class="k">{{ tx.description }}</td><td class="n">{{ cz_money(tx.tax_amount) }}</td></tr>
-{% endfor %}
+{% if with_tax %}<tr class="sub"><td class="k">Subtotal (excl. GST)</td><td class="n">{{ cz_money(doc.net_total) }}</td></tr>
+{% for tx in doc.taxes %}<tr class="tax"><td class="k">{{ tx.description }}</td><td class="n">{{ cz_money(tx.tax_amount) }}</td></tr>{% endfor %}{% endif %}
 <tr class="grand"><td class="k">{{ "GRAND TOTAL PAYABLE" if with_tax else "TOTAL AMOUNT" }}</td><td class="n">{{ cz_money(doc.grand_total) }}</td></tr>
 </table>
 <div class="cz-inv-words"><b>Amount in words:</b> {{ doc.in_words or cz_words(doc.grand_total, doc.currency or "PKR") }}</div>
 {{ m.inv_payment(doc, with_tax) }}
-<table class="cz-inv-sign"><tr><td>Customer Acceptance</td><td>Authorised Signatory</td></tr></table>
-<div class="cz-inv-footer">{{ cz_brand().name }} &nbsp;|&nbsp; {{ cz_brand().email }} &nbsp;|&nbsp; {{ cz_brand().mobile }}{% if cz_brand().srb %} &nbsp;|&nbsp; SRB No: {{ cz_brand().srb }}{% endif %}</div>
 </div>
 {% endif %}
 </div>
