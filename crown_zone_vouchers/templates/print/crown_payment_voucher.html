@@ -20,20 +20,14 @@
 <td>
 <div class="co">{{ b.name }}</div>
 <div class="co-sub">{{ b.tagline or "TOURISM & TRAVELS" }}</div>
-<div class="co-meta">{{ b.address }}<br>{{ b.ptcl }}{% if b.mobile %} &nbsp;|&nbsp; {{ b.mobile }}{% endif %} &nbsp;|&nbsp; {{ b.email }}{% if comp and comp.tax_id %}<br>TRN: {{ comp.tax_id }}{% endif %}{% if b.srb %}<br>SRB No: {{ b.srb }}{% endif %}</div>
+<div class="co-meta">{{ b.address }}<br>{{ b.ptcl }}{% if b.mobile %} &nbsp;|&nbsp; {{ b.mobile }}{% endif %} &nbsp;|&nbsp; {{ b.email }}{% if comp and comp.tax_id %}<br>TRN: {{ comp.tax_id }}{% endif %}</div>
 </td>
 <td style="width:31%;text-align:right;vertical-align:middle"><div class="badge">{{ title }}<small>{{ doc.name }}</small></div></td>
 </tr></table>
 
 <table class="cards"><tr>
-<td>
-<div class="kicker">From / Company</div>
-<div class="party">{{ doc.company }}</div>
-<div class="small">{{ b.address }}<br>{{ b.ptcl }}{% if b.email %} &nbsp;|&nbsp; {{ b.email }}{% endif %}</div>
-</td>
-<td class="gap"></td>
-<td>
-<div class="kicker">{{ "Received From" if is_receive else "Paid To" }} / {{ doc.party_type or "Party" }}</div>
+<td colspan="3">
+<div class="kicker">{{ "Received From" if is_receive else "Paid To" }}</div>
 <div class="party">{{ doc.party_name or (party.name if party else "") }}</div>
 <div class="small">
 {% if addr %}{{ addr.address_line1 or "" }}{% if addr.address_line2 %}, {{ addr.address_line2 }}{% endif %}{% if addr.city %}, {{ addr.city }}{% endif %}{% if addr.country %}, {{ addr.country }}{% endif %}<br>{% endif %}
@@ -47,13 +41,17 @@
 
 <table class="meta">
 <tr><td class="l">Voucher No.</td><td class="v"><b>{{ doc.name }}</b></td><td class="l">Date</td><td class="v">{{ frappe.utils.formatdate(doc.posting_date) }}</td></tr>
-<tr><td class="l">Payment Method</td><td class="v">{{ doc.mode_of_payment or "" }}</td><td class="l">Status</td><td class="v">{{ doc.status or "" }}</td></tr>
-<tr><td class="l">Cheque / Ref No.</td><td class="v">{{ doc.reference_no or "" }}</td><td class="l">Ref. Date</td><td class="v">{{ frappe.utils.formatdate(doc.reference_date) if doc.reference_date else "" }}</td></tr>
+<tr><td class="l">Payment Method</td><td class="v">{{ doc.mode_of_payment or "" }}</td><td class="l">Cheque / Ref No.</td><td class="v">{{ doc.reference_no or "" }}</td></tr>
+<tr><td class="l">Ref. Date</td><td class="v">{{ frappe.utils.formatdate(doc.reference_date) if doc.reference_date else "" }}</td><td class="l">Currency</td><td class="v">{{ cur }}</td></tr>
 </table>
 
 <div class="sec">Payment Details</div>
 <table class="tbl"><tbody>
 <tr><td style="width:40%"><b>{{ "Amount Received" if is_receive else "Amount Paid" }} ({{ cur }})</b></td><td class="r" style="width:60%;font-size:14px;font-weight:bold;color:#0B1F4B">{{ doc.get_formatted("paid_amount") }}</td></tr>
+{% if doc.payment_type == "Internal Transfer" %}
+<tr><td><b>Paid From Account</b></td><td class="small">{{ doc.paid_from or "" }}</td></tr>
+<tr><td><b>Paid To Account</b></td><td class="small">{{ doc.paid_to or "" }}</td></tr>
+{% endif %}
 </tbody></table>
 
 {% if doc.references %}
@@ -84,7 +82,7 @@
 <table class="foot"><tr>
 <td><span class="k">Web</span>{{ b.website or (comp.website if comp and comp.website else b.email) }}</td>
 <td class="c"><span class="k">Email</span>{{ b.email }}</td>
-<td class="r"><span class="k">Tel</span>{{ b.mobile or b.ptcl }}</td>
+<td class="r"><span class="k">Tel</span>0092-335-2226182</td>
 </tr></table>
 </td></tr></table>
 </div>
