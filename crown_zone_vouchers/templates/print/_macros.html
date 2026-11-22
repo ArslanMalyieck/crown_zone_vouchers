@@ -53,7 +53,7 @@
 {{ wave() }}
 {% endmacro %}
 
-{% macro inv_header(title, doc) %}
+{% macro inv_header(title, doc, with_tax=True) %}
 {% set b = cz_brand() %}
 {% set tsize = 15 if title|length <= 12 else (13 if title|length <= 18 else 12) %}
 <table class="cz-inv-top"><tr>
@@ -62,7 +62,7 @@
 <div class="cz-inv-brand-name">{{ brand_name(b) }}</div>
 <div class="cz-inv-brand-tag">{{ b.tagline }}</div>
 <div class="cz-inv-brand-line"></div>
-<div class="cz-inv-brand-meta">{{ b.address }}<br>{{ b.ptcl }}{% if b.mobile %} &nbsp;|&nbsp; {{ b.mobile }}{% endif %} &nbsp;|&nbsp; {{ b.email }}{% if b.srb %}<br>SRB No: {{ b.srb }}{% endif %}</div>
+<div class="cz-inv-brand-meta">{{ b.address }}<br>{{ b.ptcl }}{% if b.mobile %} &nbsp;|&nbsp; {{ b.mobile }}{% endif %} &nbsp;|&nbsp; {{ b.email }}{% if b.srb and with_tax %}<br>SRB No: {{ b.srb }}{% endif %}</div>
 </td>
 <td class="cz-inv-id">
 <div class="cz-inv-doc-type" style="font-size:{{ tsize }}pt">{{ title }}</div>

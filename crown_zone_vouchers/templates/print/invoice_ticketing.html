@@ -13,7 +13,7 @@
 .cztk-brk .v{font-size:8.6pt;font-weight:700;color:#0A2540;margin-top:2px}
 </style>
 <div class="cz cz-inv">
-{{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc) }}
+{{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc, with_tax) }}
 <table class="cz-inv-bill"><tr>
 <td class="cz-inv-bill-customer" style="width:58%">
 <div class="cz-inv-kicker">BILL TO</div>

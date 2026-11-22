@@ -9,7 +9,7 @@
 {% set airline_txt = airlines[:2] | join(', ') ~ (' +%d more' % (airlines|length - 2) if airlines|length > 2 else '') %}
 {% set sector_txt = sectors[:2] | join(', ') ~ (' +%d more' % (sectors|length - 2) if sectors|length > 2 else '') %}
 {{ m.frame_open(tickets|length + 14, "cz-inv") }}
-{{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc) }}
+{{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc, with_tax) }}
 {{ m.inv_billto(doc, v, with_tax) }}
 {{ m.inv_facts([
  ("Passengers", pax|length),

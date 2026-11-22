@@ -18,7 +18,7 @@
 {% set dates = cz_date(v.cz_tour_date or v.cz_travel_date) %}
 {% endif %}
 {{ m.frame_open((doc.items|length) + 20, "cz-inv") }}
-{{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc) }}
+{{ m.inv_header("SALES TAX INVOICE" if with_tax else "SALES INVOICE", doc, with_tax) }}
 {{ m.inv_billto(doc, v, with_tax) }}
 {% if v and service in ("Visa", "Umrah", "Hajj", "Tour") and v.cz_travellers %}
 <div class="cz-inv-sec">PASSENGERS / APPLICANTS</div>
@@ -49,7 +49,7 @@
 {% for i in doc.items %}
 {% set nm = ((i.get("full_name") or "") ~ " " ~ (i.get("middle_name") or "") ~ " " ~ (i.get("last_name") or "")).strip() %}
 {% set sell = ((i.get("final_price") or i.get("rate") or 0)|float) * (i.get("qty") or 1) %}
-<tr><td class="c">{{ loop.index }}</td><td><div class="cz-inv-item-title">{{ (i.description or i.item_name) | striptags }}</div>{% if detail %}<div class="cz-inv-item-meta">{{ detail }}</div>{% endif %}{% if dates %}<div class="cz-inv-item-meta nw">{{ dates }}</div>{% endif %}{% if nm or i.get("country") or i.get("passport") or i.get("remarks") %}<div class="cz-inv-item-meta">{% if nm %}{{ nm }}{% endif %}{% if i.get("country") %} &nbsp;|&nbsp; {{ i.get("country") }}{% endif %}{% if i.get("passport") %} &nbsp;|&nbsp; {{ i.get("passport") }}{% endif %}{% if i.get("remarks") %}<br>{{ i.get("remarks") }}{% endif %}</div>{% endif %}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td>{% if with_tax %}<td class="r nw">{{ cz_money(i.rate) }}</td><td class="r nw">{{ cz_money((i.get("vat") or 0) * (i.qty or 1)) }}</td>{% endif %}<td class="r nw">{{ cz_money(i.amount if with_tax else sell) }}</td></tr>
+<tr><td class="c">{{ loop.index }}</td><td><div class="cz-inv-item-title">{{ (i.description or i.item_name) | striptags }}</div>{% if detail %}<div class="cz-inv-item-meta">{{ detail }}</div>{% endif %}{% if dates %}<div class="cz-inv-item-meta nw">{{ dates }}</div>{% endif %}{% if nm or i.get("country") or i.get("passport") or i.get("remarks") %}<div class="cz-inv-item-meta">{% if nm %}{{ nm }}{% endif %}{% if i.get("country") %} &nbsp;|&nbsp; {{ i.get("country") }}{% endif %}{% if i.get("passport") %} &nbsp;|&nbsp; {{ i.get("passport") }}{% endif %}{% if i.get("remarks") %}<br>{{ i.get("remarks") }}{% endif %}</div>{% endif %}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td>{% if with_tax %}<td class="r nw">{{ cz_money(i.rate) }}</td><td class="r nw">{{ cz_money((i.get("vat") or 0) * (i.qty or 1)) }}</td>{% endif %}<td class="r nw">{{ cz_money((i.amount + (i.get("vat") or 0) * (i.qty or 1)) if with_tax else sell) }}</td></tr>
 {% endfor %}
 {{ m.pad([4 - (doc.items|length), 0]|max, 6 if with_tax else 4) }}
 </tbody></table>

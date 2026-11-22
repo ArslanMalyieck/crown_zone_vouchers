@@ -59,7 +59,7 @@
 {% for i in doc.items %}
 {% set nm = ((i.get("full_name") or "") ~ " " ~ (i.get("middle_name") or "") ~ " " ~ (i.get("last_name") or "")).strip() %}
 {% set sell = ((i.get("final_price") or i.get("rate") or 0)|float) * (i.get("qty") or 1) %}
-<tr><td class="c">{{ loop.index }}</td><td><b>{{ (i.description or i.item_name) | striptags }}</b>{% if nm or i.get("country") or i.get("remarks") %}<div class="small">{% if nm %}{{ nm }}{% endif %}{% if i.get("country") %} &nbsp;|&nbsp; {{ i.get("country") }}{% endif %}{% if i.get("remarks") %}<br>{{ i.get("remarks") }}{% endif %}</div>{% endif %}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td>{% if with_tax %}<td class="r nw">{{ cz_money(i.rate) }}</td><td class="r nw">{{ cz_money((i.get("vat") or 0) * (i.qty or 1)) }}</td>{% endif %}<td class="r nw">{{ cz_money(sell if not with_tax else i.amount) }}</td></tr>
+<tr><td class="c">{{ loop.index }}</td><td><b>{{ (i.description or i.item_name) | striptags }}</b>{% if nm or i.get("country") or i.get("remarks") %}<div class="small">{% if nm %}{{ nm }}{% endif %}{% if i.get("country") %} &nbsp;|&nbsp; {{ i.get("country") }}{% endif %}{% if i.get("remarks") %}<br>{{ i.get("remarks") }}{% endif %}</div>{% endif %}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td>{% if with_tax %}<td class="r nw">{{ cz_money(i.rate) }}</td><td class="r nw">{{ cz_money((i.get("vat") or 0) * (i.qty or 1)) }}</td>{% endif %}<td class="r nw">{{ cz_money((i.amount + (i.get("vat") or 0) * (i.qty or 1)) if with_tax else sell) }}</td></tr>
 {% endfor %}
 </tbody></table>
 {% endif %}
