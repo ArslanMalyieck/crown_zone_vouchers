@@ -54,7 +54,6 @@
 <div class="sec">Payment Details</div>
 <table class="tbl"><tbody>
 <tr><td style="width:40%"><b>{{ "Amount Received" if is_receive else "Amount Paid" }} ({{ cur }})</b></td><td class="r" style="width:60%;font-size:14px;font-weight:bold;color:#0B1F4B">{{ doc.get_formatted("paid_amount") }}</td></tr>
-{% if doc.remarks %}<tr><td><b>Remarks</b></td><td class="small">{{ doc.remarks }}</td></tr>{% endif %}
 </tbody></table>
 
 {% if doc.references %}
@@ -68,6 +67,7 @@
 <div class="note">No document allocation for this voucher.</div>
 {% endif %}
 
+</td></tr><tr><td class="footcell">
 <div class="tot"><table>
 <tr><td class="k">Total Allocated</td><td class="n">{{ frappe.utils.fmt_money(doc.total_allocated_amount, currency=cur) }}</td></tr>
 <tr class="grand"><td class="k">{{ "Total Received" if is_receive else "Total Paid" }} ({{ cur }})</td><td class="n">{{ doc.get_formatted("paid_amount") }}</td></tr>
@@ -81,7 +81,6 @@
 <td colspan="2" style="text-align:right"><b>Computer Generated Voucher</b>No signature required</td>
 </tr></table>
 
-</td></tr><tr><td class="footcell">
 <table class="foot"><tr>
 <td><span class="k">Web</span>{{ b.website or (comp.website if comp and comp.website else b.email) }}</td>
 <td class="c"><span class="k">Email</span>{{ b.email }}</td>
