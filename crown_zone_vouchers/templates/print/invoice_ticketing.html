@@ -50,7 +50,7 @@
 <div class="cztk-page" {% if not loop.last %}style="page-break-after:always"{% endif %}>
 <div class="cz-inv-sec">AIRLINE TICKETS &nbsp;|&nbsp; PAGE {{ loop.index }} OF {{ pages|length }}{% if with_tax %} &nbsp;|&nbsp; SALES TAX INVOICE{% endif %}</div>
 <table class="cz-inv-tbl"><thead><tr>
-<th style="width:4%">#</th><th style="width:18%">Passenger Name</th><th style="width:14%">Ticket No.</th>
+<th style="width:4%">#</th><th style="width:{% if with_tax %}18%{% else %}22%{% endif %}">Passenger Name</th><th style="width:{% if with_tax %}14%{% else %}15%{% endif %}">Ticket No.</th>
 <th style="width:9%">Flight</th><th style="width:5%">CL</th><th style="width:9%">Dep Date</th>
 <th style="width:14%">Sector</th>{% if with_tax %}<th class="r" style="width:9%">Fare</th><th class="r" style="width:9%">Taxes</th>{% endif %}
 <th class="r" style="width:{% if with_tax %}9%{% else %}14%{% endif %}">Amount ({{ doc.currency or "PKR" }})</th>
@@ -72,7 +72,7 @@
 <td class="r nw">{{ cz_money(r.amount) }}</td>
 </tr>
 {% endfor %}
-{% if loop.last %}{% set base = 0 if chunk|length >= 8 else (18 if chunk|length <= 2 else 14) %}{% set target = base - (1 if tk.charges else 0) %}{% if pages|length > 1 %}{% set target = 6 %}{% endif %}{% if target %}{{ m.pad([target - (chunk|length), 0]|max, 10) }}{% endif %}{% endif %}
+{% if loop.last %}{% set base = 0 if chunk|length >= 8 else (18 if chunk|length <= 2 else 14) %}{% set target = base - (1 if tk.charges else 0) %}{% if pages|length > 1 %}{% set target = 6 %}{% endif %}{% if target %}{{ m.pad([target - (chunk|length), 0]|max, 10 if with_tax else 8) }}{% endif %}{% endif %}
 {% set ns.cum_fare = ns.cum_fare + pt.fare %}{% set ns.cum_tax = ns.cum_tax + pt.tax %}{% set ns.cum_amt = ns.cum_amt + pt.amt %}
 {% if pages|length > 1 %}
 <tr class="cztk-sum"><td colspan="{{ 7 if with_tax else 5 }}">Page Total</td>{% if with_tax %}<td class="r nw">{{ cz_money(pt.fare) }}</td><td class="r nw">{{ cz_money(pt.tax) }}</td>{% endif %}<td class="r nw">{{ cz_money(pt.amt) }}</td></tr>

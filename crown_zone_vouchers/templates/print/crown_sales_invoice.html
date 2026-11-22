@@ -54,7 +54,7 @@
 </tbody></table>
 {% else %}
 <table class="tbl"><thead><tr>
-<th style="width:4%">#</th><th style="width:{% if with_tax %}50%{% else %}66%{% endif %}">Description</th><th class="c" style="width:7%">Qty</th>{% if with_tax %}<th class="r" style="width:13%">Rate</th><th class="r" style="width:11%">GST</th>{% endif %}<th class="r" style="width:15%">Amount</th>
+<th style="width:4%">#</th><th style="width:{% if with_tax %}50%{% else %}60%{% endif %}">Description</th><th class="c" style="width:7%">Qty</th>{% if with_tax %}<th class="r" style="width:13%">Rate</th><th class="r" style="width:11%">GST</th><th class="r" style="width:15%">Amount</th>{% else %}<th class="r" style="width:29%">Amount</th>{% endif %}
 </tr></thead><tbody>
 {% for i in doc.items %}
 {% set nm = ((i.get("full_name") or "") ~ " " ~ (i.get("middle_name") or "") ~ " " ~ (i.get("last_name") or "")).strip() %}

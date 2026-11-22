@@ -9,6 +9,8 @@
 <tr class="tax"><td class="k">{{ tx.description }}{% if tx.rate and tx.charge_type != "Actual" %} ({{ tx.rate }}%){% endif %}</td><td class="n">{{ cz_money(tx.tax_amount) }}</td></tr>
 {% endfor %}
 <tr><td class="k">Total Tax</td><td class="n">{{ cz_money(doc.total_taxes_and_charges) }}</td></tr>
+{% else %}
+<tr><td class="k">Total Items</td><td class="n">{{ doc.items|length }}</td></tr>
 {% endif %}
 <tr class="grand"><td class="k">{% if with_tax %}{{ grand_label or "GRAND TOTAL" }}{% else %}TOTAL AMOUNT{% endif %} ({{ doc.currency or "PKR" }})</td><td class="n">{{ cz_money(doc.grand_total) }}</td></tr>
 </table>

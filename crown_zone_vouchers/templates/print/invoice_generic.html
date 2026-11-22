@@ -45,13 +45,13 @@
 </tbody></table>
 {% endif %}
 <div class="cz-inv-sec"{% if doc.items|length >= 8 %} style="page-break-before:always"{% endif %}>{{ svc_title or service }} SERVICES &amp; CHARGES</div>
-<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:{% if with_tax %}46%{% else %}66%{% endif %}">Description</th><th class="c" style="width:8%">Qty</th>{% if with_tax %}<th class="r" style="width:14%">Rate</th><th class="r" style="width:14%">GST</th>{% endif %}<th class="r" style="width:14%">Amount</th></tr></thead><tbody>
+<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:{% if with_tax %}46%{% else %}60%{% endif %}">Description</th><th class="c" style="width:8%">Qty</th>{% if with_tax %}<th class="r" style="width:14%">Rate</th><th class="r" style="width:14%">GST</th>{% endif %}<th class="r" style="width:{% if with_tax %}14%{% else %}28%{% endif %}">Amount</th></tr></thead><tbody>
 {% for i in doc.items %}
 {% set nm = ((i.get("full_name") or "") ~ " " ~ (i.get("middle_name") or "") ~ " " ~ (i.get("last_name") or "")).strip() %}
 {% set sell = ((i.get("final_price") or i.get("rate") or 0)|float) * (i.get("qty") or 1) %}
 <tr><td class="c">{{ loop.index }}</td><td><div class="cz-inv-item-title">{{ (i.description or i.item_name) | striptags }}</div>{% if detail %}<div class="cz-inv-item-meta">{{ detail }}</div>{% endif %}{% if dates %}<div class="cz-inv-item-meta nw">{{ dates }}</div>{% endif %}{% if nm or i.get("country") or i.get("passport") or i.get("remarks") %}<div class="cz-inv-item-meta">{% if nm %}{{ nm }}{% endif %}{% if i.get("country") %} &nbsp;|&nbsp; {{ i.get("country") }}{% endif %}{% if i.get("passport") %} &nbsp;|&nbsp; {{ i.get("passport") }}{% endif %}{% if i.get("remarks") %}<br>{{ i.get("remarks") }}{% endif %}</div>{% endif %}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td>{% if with_tax %}<td class="r nw">{{ cz_money(i.rate) }}</td><td class="r nw">{{ cz_money((i.get("vat") or 0) * (i.qty or 1)) }}</td>{% endif %}<td class="r nw">{{ cz_money(i.amount if with_tax else sell) }}</td></tr>
 {% endfor %}
-{{ m.pad([4 - (doc.items|length), 0]|max, 6 if with_tax else 5) }}
+{{ m.pad([4 - (doc.items|length), 0]|max, 6 if with_tax else 4) }}
 </tbody></table>
 <div class="cz-inv-keep">
 {% include "crown_zone_vouchers/templates/print/_inv_totals.html" %}

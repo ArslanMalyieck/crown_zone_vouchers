@@ -18,7 +18,7 @@
  ("Sector(s)", sector_txt)
 ]) }}
 <div class="cz-inv-sec">AIRLINE TICKET DETAILS</div>
-<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:{% if with_tax %}20%{% else %}30%{% endif %}">Passenger</th><th style="width:15%">Ticket No.</th><th style="width:12%">Airline</th><th style="width:13%">Sector</th><th style="width:11%">Travel Date</th>{% if with_tax %}<th class="r" style="width:8%">Fare</th><th class="r" style="width:8%">Taxes</th>{% endif %}<th class="r" style="width:9%">Amount</th></tr></thead><tbody>
+<table class="cz-inv-tbl"><thead><tr><th style="width:4%">#</th><th style="width:{% if with_tax %}20%{% else %}30%{% endif %}">Passenger</th><th style="width:15%">Ticket No.</th><th style="width:12%">Airline</th><th style="width:13%">Sector</th><th style="width:11%">Travel Date</th>{% if with_tax %}<th class="r" style="width:8%">Fare</th><th class="r" style="width:8%">Taxes</th><th class="r" style="width:9%">Amount</th>{% else %}<th class="r" style="width:15%">Amount</th>{% endif %}</tr></thead><tbody>
 {% for i in tickets %}
 {% set tr = cz_ticket_row(i) %}
 {% set nm = ((i.get("full_name") or "") ~ " " ~ (i.get("middle_name") or "") ~ " " ~ (i.get("last_name") or "")).strip() %}

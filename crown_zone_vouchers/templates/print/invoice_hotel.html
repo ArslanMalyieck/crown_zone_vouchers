@@ -17,7 +17,7 @@
  ("Nights", v.cz_total_nights if v else "")
 ]) }}
 <div class="cz-inv-sec">HOTEL &amp; ROOM DETAILS</div>
-<table class="cz-inv-tbl"><thead><tr><th style="width:22%">Hotel / City</th><th style="width:13%">Room Type</th><th style="width:15%">Lead Guest</th><th class="c" style="width:7%">Rooms</th><th class="c" style="width:7%">Nights</th>{% if with_tax %}<th class="r" style="width:11%">Rate</th><th class="r" style="width:11%">Other Fees</th>{% endif %}<th class="r" style="width:14%">Amount</th></tr></thead><tbody>
+<table class="cz-inv-tbl"><thead><tr><th style="width:{% if with_tax %}22%{% else %}34%{% endif %}">Hotel / City</th><th style="width:{% if with_tax %}13%{% else %}14%{% endif %}">Room Type</th><th style="width:{% if with_tax %}15%{% else %}18%{% endif %}">Lead Guest</th><th class="c" style="width:7%">Rooms</th><th class="c" style="width:7%">Nights</th>{% if with_tax %}<th class="r" style="width:11%">Rate</th><th class="r" style="width:11%">Other Fees</th>{% endif %}<th class="r" style="width:{% if with_tax %}14%{% else %}20%{% endif %}">Amount</th></tr></thead><tbody>
 {% for i in doc.items %}
 {% set sell = ((i.get("final_price") or i.get("rate") or 0)|float) * (i.get("qty") or 1) %}
 {% set nm = ((i.get("full_name") or "") ~ " " ~ (i.get("middle_name") or "") ~ " " ~ (i.get("last_name") or "")).strip() %}
