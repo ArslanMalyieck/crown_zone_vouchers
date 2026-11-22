@@ -41,6 +41,13 @@
 <tr><td class="c">{{ loop.index }}</td><td>{{ (i.description or i.item_name) | striptags }}</td><td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}</td>{% if with_tax %}<td class="r nw">{{ cz_money(i.rate) }}</td>{% endif %}<td class="r nw">{{ cz_money((i.amount or (i.rate * (i.qty or 1))) if with_tax else ((i.get("final_price") or i.rate or 0) * (i.qty or 1))) }}</td></tr>
 {% endfor %}
 </tbody></table>
+<table class="cz-inv-totals">
+{% if with_tax %}<tr class="sub"><td class="k">Subtotal (excl. GST)</td><td class="n">{{ cz_money(doc.net_total) }}</td></tr>
+{% for tx in doc.taxes %}<tr class="tax"><td class="k">{{ tx.description }}</td><td class="n">{{ cz_money(tx.tax_amount) }}</td></tr>{% endfor %}{% endif %}
+<tr class="grand"><td class="k">{{ "GRAND TOTAL PAYABLE" if with_tax else "TOTAL AMOUNT" }}</td><td class="n">{{ cz_money(doc.grand_total) }}</td></tr>
+</table>
+<div class="cz-inv-words"><b>Amount in words:</b> {{ doc.in_words or cz_words(doc.grand_total, doc.currency or "PKR") }}</div>
+{{ m.inv_payment(doc, with_tax) }}
 </div>
 {% endif %}
 
