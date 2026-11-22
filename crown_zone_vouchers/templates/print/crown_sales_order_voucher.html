@@ -3,7 +3,7 @@
 {% set comp = frappe.get_doc("Company", doc.company) if doc.company else None %}
 {% set st = doc.service_type or "Sales" %}
 {% set travellers = doc.get("cz_travellers") or [] %}
-<div class="czg">
+<div class="czg"><table class="frame"><tr><td class="main">
 <table class="hdr"><tr>
 <td class="logo">{% set logo = b.logo or (comp.get("custom_logo") if comp else "") or (comp.company_logo if comp else "") %}{% if logo %}<img src="{{ logo }}">{% endif %}</td>
 <td>
@@ -139,9 +139,12 @@
 <td><b>Customer Signature</b>&nbsp;</td>
 </tr></table>
 
+</td></tr><tr><td class="footcell">
 <table class="foot"><tr>
 <td><span class="k">Web</span>{{ b.website or (comp.website if comp and comp.website else b.email) }}</td>
 <td class="c"><span class="k">Email</span>{{ b.email }}</td>
 <td class="r"><span class="k">Tel</span>{{ b.mobile or b.ptcl }}</td>
 </tr></table>
+</td></tr></table>
 </div>
+

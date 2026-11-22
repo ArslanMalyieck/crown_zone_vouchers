@@ -14,7 +14,7 @@
 {% endif %}
 {% set addr = frappe.get_doc("Address", addr_name) if addr_name and frappe.db.exists("Address", addr_name) else None %}
 {% set cur = doc.paid_from_account_currency or doc.paid_to_account_currency or "PKR" %}
-<div class="czg">
+<div class="czg"><table class="frame"><tr><td class="main">
 <table class="hdr"><tr>
 <td class="logo">{% set logo = b.logo or (comp.get("custom_logo") if comp else "") or (comp.company_logo if comp else "") %}{% if logo %}<img src="{{ logo }}">{% endif %}</td>
 <td>
@@ -81,9 +81,12 @@
 <td colspan="2" style="text-align:right"><b>Computer Generated Voucher</b>No signature required</td>
 </tr></table>
 
+</td></tr><tr><td class="footcell">
 <table class="foot"><tr>
 <td><span class="k">Web</span>{{ b.website or (comp.website if comp and comp.website else b.email) }}</td>
 <td class="c"><span class="k">Email</span>{{ b.email }}</td>
 <td class="r"><span class="k">Tel</span>{{ b.mobile or b.ptcl }}</td>
 </tr></table>
+</td></tr></table>
 </div>
+

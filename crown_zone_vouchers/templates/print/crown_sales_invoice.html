@@ -6,7 +6,7 @@
 {% for i in doc.items %}{% if i.get("cz_ticket_no") or i.get("cz_passenger") %}{% set is_ticket.v = 1 %}{% endif %}{% endfor %}
 {% set cur = doc.currency or "PKR" %}
 {% set v = cz_voucher(doc) %}
-<div class="czg">
+<div class="czg"><table class="frame"><tr><td class="main">
 <table class="hdr"><tr>
 <td class="logo">{% set logo = b.logo or (comp.get("custom_logo") if comp else "") or (comp.company_logo if comp else "") %}{% if logo %}<img src="{{ logo }}">{% endif %}</td>
 <td>
@@ -83,9 +83,12 @@
 <td><b>Authorised Signatory</b>&nbsp;</td>
 </tr></table>
 
+</td></tr><tr><td class="footcell">
 <table class="foot"><tr>
 <td><span class="k">Web</span>{{ b.website or (comp.website if comp and comp.website else b.email) }}</td>
 <td class="c"><span class="k">Email</span>{{ b.email }}</td>
 <td class="r"><span class="k">Tel</span>{{ b.mobile or b.ptcl }}</td>
 </tr></table>
+</td></tr></table>
 </div>
+
