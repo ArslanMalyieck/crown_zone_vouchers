@@ -75,7 +75,7 @@
 <tr class="grand"><td class="k">Grand Total ({{ cur }})</td><td class="n">{{ frappe.utils.fmt_money(doc.grand_total, currency=cur) }}</td></tr>
 </table></div>
 
-<div class="words"><b>Amount in words:</b> {{ doc.in_words or cz_words(doc.grand_total, cur) }}</div>
+<div class="words"><b>Amount in words:</b> {{ cz_words(doc.grand_total, cur) or doc.in_words }}</div>
 
 {% set bank_acc = frappe.db.get_value("Company", doc.company, "default_bank_account") if doc.company else None %}
 {% if bank_acc and frappe.db.exists("Bank Account", bank_acc) %}
