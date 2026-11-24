@@ -310,6 +310,7 @@ CROWN_PRINTS = [
     ("Crown Payment Voucher", "Payment Entry", "crown_payment_voucher.html"),
     ("Crown Sales Invoice", "Sales Invoice", "crown_sales_invoice.html"),
     ("Crown Sales Order Voucher", "Sales Order", "crown_sales_order_voucher.html"),
+    ("Crown Quotation", "Quotation", "crown_quotation.html"),
 ]
 CROWN_PRINT_NAMES = {name for name, _dt, _tpl in CROWN_PRINTS}
 
@@ -367,6 +368,7 @@ def create_print_formats(force=False):
 
     make_property_setter("Sales Order", None, "default_print_format", "CZ Voucher", "Data", for_doctype=True)
     make_property_setter("Sales Invoice", None, "default_print_format", "CZ Invoice", "Data", for_doctype=True)
+    make_property_setter("Quotation", None, "default_print_format", "Crown Quotation", "Data", for_doctype=True)
 
 
 # ------------------------------------------------------------------ workspace

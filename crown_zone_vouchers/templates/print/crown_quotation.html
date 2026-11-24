@@ -1,0 +1,94 @@
+{% include "crown_zone_vouchers/templates/print/_crown_style.html" %}
+{% set b = cz_brand() %}
+{% set comp = frappe.get_doc("Company", doc.company) if doc.company else None %}
+{% set cur = doc.currency or "PKR" %}
+<div class="czg"><table class="frame"><tr><td class="main">
+<table class="hdr"><tr>
+<td class="logo">{% set logo = b.logo or (comp.get("custom_logo") if comp else "") or (comp.company_logo if comp else "") %}{% if logo %}<img src="{{ logo }}">{% endif %}</td>
+<td>
+<div class="co">{{ b.name }}</div>
+<div class="co-sub">{{ b.tagline or "TOURISM & TRAVELS" }}</div>
+<div class="co-meta">{{ b.address }}<br>{{ b.ptcl }}{% if b.mobile %} &nbsp;|&nbsp; {{ b.mobile }}{% endif %} &nbsp;|&nbsp; {{ b.email }}{% if b.srb %}<br>SRB No: {{ b.srb }}{% endif %}</div>
+</td>
+<td style="width:28%;text-align:right;vertical-align:middle">
+<div class="badge">QUOTATION<small>{{ doc.name }}</small></div>
+</td>
+</tr></table>
+
+<table class="cards"><tr>
+<td>
+<div class="kicker">Quotation For</div>
+<div class="party">{{ doc.customer_name or doc.customer }}</div>
+<div class="small">
+{% set a = cz_address(doc) %}
+{% if a %}{{ a }}<br>{% endif %}
+{% if doc.contact_display %}{{ doc.contact_display }}{% endif %}
+{% if doc.contact_mobile %} &nbsp;|&nbsp; {{ doc.contact_mobile }}{% endif %}
+{% if doc.contact_email %}<br>{{ doc.contact_email }}{% endif %}
+</div>
+</td>
+<td class="gap"></td>
+<td>
+<div class="kicker">Quotation Details</div>
+<table class="cz-inv-mini" style="width:100%;border-collapse:collapse">
+<tr><td style="color:#6B7280;width:42%">Currency</td><td style="text-align:right">{{ cur }}</td></tr>
+{% if doc.payment_terms_template %}<tr><td style="color:#6B7280">Payment Terms</td><td style="text-align:right">{{ doc.payment_terms_template }}</td></tr>{% endif %}
+{% if doc.po_no %}<tr><td style="color:#6B7280">Reference</td><td style="text-align:right">{{ doc.po_no }}</td></tr>{% endif %}
+{% if doc.project %}<tr><td style="color:#6B7280">Project</td><td style="text-align:right">{{ doc.project }}</td></tr>{% endif %}
+</table>
+</td>
+</tr></table>
+
+<table class="meta">
+<tr><td class="l">Quotation No.</td><td class="v"><b>{{ doc.name }}</b></td><td class="l">Date</td><td class="v">{{ frappe.utils.formatdate(doc.transaction_date) }}</td></tr>
+<tr><td class="l">Valid Till</td><td class="v">{{ frappe.utils.formatdate(doc.valid_till) if doc.valid_till else "—" }}</td><td class="l">Prepared By</td><td class="v">{{ cz_user(doc.owner) }}</td></tr>
+</table>
+
+<div class="sec">Items</div>
+<table class="tbl"><thead><tr>
+<th style="width:5%">Sr</th><th style="width:55%">Description</th><th class="c" style="width:8%">Qty</th>
+<th class="r" style="width:15%">Rate</th><th class="r" style="width:17%">Amount</th>
+</tr></thead><tbody>
+{% for i in doc.items %}
+<tr>
+<td class="c">{{ loop.index }}</td>
+<td>
+<div class="cz-inv-item-title">{{ (i.item_name or i.item_code) | striptags }}</div>
+{% if i.description and (i.description | striptags | trim) != ((i.item_name or i.item_code) | striptags | trim) %}<div class="cz-inv-item-meta">{{ i.description | striptags }}</div>{% endif %}
+{% if i.get("delivery_date") %}<div class="cz-inv-item-meta">Delivery: {{ frappe.utils.formatdate(i.delivery_date) }}</div>{% endif %}
+</td>
+<td class="c">{{ i.qty | int if i.qty == (i.qty | int) else i.qty }}{% if i.uom %} <span class="cz-inv-item-meta">{{ i.uom }}</span>{% endif %}</td>
+<td class="r nw">{{ frappe.utils.fmt_money(i.rate, currency=cur) }}</td>
+<td class="r nw">{{ frappe.utils.fmt_money(i.amount, currency=cur) }}</td>
+</tr>
+{% endfor %}
+</tbody></table>
+
+<div class="tot"><table>
+<tr><td class="k">Sub Total</td><td class="n">{{ frappe.utils.fmt_money(doc.net_total, currency=cur) }}</td></tr>
+{% if doc.discount_amount and doc.discount_amount > 0 %}
+<tr><td class="k">Discount</td><td class="n">- {{ frappe.utils.fmt_money(doc.discount_amount, currency=cur) }}</td></tr>
+{% endif %}
+{% for tx in doc.taxes %}
+<tr><td class="k">{{ tx.description }}</td><td class="n">{{ frappe.utils.fmt_money(tx.tax_amount, currency=cur) }}</td></tr>
+{% endfor %}
+<tr class="grand"><td class="k">Grand Total ({{ cur }})</td><td class="n">{{ frappe.utils.fmt_money(doc.grand_total, currency=cur) }}</td></tr>
+</table></div>
+
+<div class="words"><b>Amount in words:</b> {{ doc.in_words or cz_words(doc.grand_total, cur) }}</div>
+
+{% set bank_acc = frappe.db.get_value("Company", doc.company, "default_bank_account") if doc.company else None %}
+{% if bank_acc and frappe.db.exists("Bank Account", bank_acc) %}
+{% set ba = frappe.get_doc("Bank Account", bank_acc) %}
+<div class="bank"><b>Bank Details:</b> {{ ba.get("bank") or "" }} &nbsp;|&nbsp; A/C Title: {{ ba.get("account_name") or doc.company }} &nbsp;|&nbsp; A/C No: {{ ba.get("bank_account_no") or ba.get("iban") or "" }}</div>
+{% endif %}
+
+{% if doc.terms %}<div class="terms"><b>Terms &amp; Conditions</b><br>{{ doc.terms }}</div>{% endif %}
+
+</td></tr><tr><td class="footcell">
+<table class="tbl" style="border-top:2px solid #C9A227"><tr>
+<td style="width:34%;vertical-align:bottom">Thank you for choosing Crown Zone Tourism</td>
+<td style="width:33%;text-align:center;vertical-align:bottom"><div style="border-top:1px solid #0B1F4B;margin:0 18px;padding-top:4px">Authorized Signature</div></td>
+<td style="width:33%;text-align:right;vertical-align:bottom">This is a computer generated quotation</td>
+</tr></table>
+</td></tr></table></div>
