@@ -1,0 +1,111 @@
+{
+ "actions": [],
+ "creation": "2026-10-29 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "service_name",
+  "enabled",
+  "voucher_prefix",
+  "invoice_prefix",
+  "voucher_series",
+  "default_item",
+  "default_tax_rate",
+  "default_tax_template",
+  "terms_section",
+  "terms"
+ ],
+ "fields": [
+  {
+   "fieldname": "service_name",
+   "fieldtype": "Data",
+   "label": "Service",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "description": "Fixed names: Airline, Hotel, Visa, Transport, Umrah, Hajj. Do not rename."
+  },
+  {
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "voucher_prefix",
+   "fieldtype": "Data",
+   "label": "Voucher Prefix",
+   "reqd": 1,
+   "description": "Voucher no. = PREFIX-YYYY-00001"
+  },
+  {
+   "fieldname": "invoice_prefix",
+   "fieldtype": "Data",
+   "label": "Invoice Prefix",
+   "reqd": 1,
+   "description": "Invoice no. = PREFIX-YYYY-00001"
+  },
+  {
+   "fieldname": "voucher_series",
+   "fieldtype": "Data",
+   "label": "Voucher Series Override",
+   "description": "Optional full series, e.g. CZ-ACT-.YYYY.-.#### (overrides prefix)"
+  },
+  {
+   "fieldname": "default_item",
+   "fieldtype": "Link",
+   "label": "Default Service Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "default_tax_rate",
+   "fieldtype": "Select",
+   "label": "Default Tax Rate",
+   "options": "5\n0",
+   "default": "0"
+  },
+  {
+   "fieldname": "default_tax_template",
+   "fieldtype": "Link",
+   "label": "Default Tax Template (With Tax invoice)",
+   "options": "Sales Taxes and Charges Template"
+  },
+  {
+   "fieldname": "terms_section",
+   "fieldtype": "Section Break",
+   "label": "Voucher Terms & Conditions (printed beside QR)"
+  },
+  {
+   "fieldname": "terms",
+   "fieldtype": "Table",
+   "label": "Terms",
+   "options": "Travel Service Term"
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-14 19:33:29.624266",
+ "modified_by": "Administrator",
+ "module": "Crown Zone Vouchers",
+ "name": "Travel Service Type",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "print": 1,
+   "email": 1
+  }
+ ],
+ "autoname": "field:service_name",
+ "naming_rule": "By fieldname"
+}

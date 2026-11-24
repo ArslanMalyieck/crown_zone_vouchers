@@ -1,0 +1,50 @@
+{% import "crown_zone_vouchers/templates/print/_macros.html" as m %}
+{% include "crown_zone_vouchers/templates/print/_css.html" %}
+{% set is_hajj = (pkg == "Hajj") %}
+{% set load = (doc.cz_travellers|length) + (doc.cz_hotel_stays|length) %}
+{{ m.frame_open(load) }}
+{{ m.header(("HAJJ" if is_hajj else "UMRAH") ~ " PACKAGE VOUCHER", doc) }}
+<div class="cz-info">Customer confirmation: package, pilgrims, arrangements and terms - no financial amounts</div>
+
+{% set names = doc.cz_travellers | map(attribute="traveller_name") | select | list %}
+
+{{ m.sec("BOOKING / CUSTOMER DETAILS") }}
+<table class="cz-grid">
+<tr><td><div class="lb">Lead Pilgrim / Contact</div><div class="bx">{{ doc.cz_lead_guest or doc.contact_display }}{% if doc.cz_contact_whatsapp or doc.contact_mobile %} / {{ doc.cz_contact_whatsapp or doc.contact_mobile }}{% endif %}</div></td>
+<td><div class="lb">{{ "Hajj Package / Ref." if is_hajj else "Package & Booking Ref." }}</div><div class="bx">{{ doc.cz_package_name or "" }}{% if doc.cz_group_ref or doc.cz_booking_reference %} / {{ doc.cz_group_ref or doc.cz_booking_reference }}{% endif %}</div></td>
+<td><div class="lb">Travel Dates</div><div class="bx">{{ cz_date(doc.cz_travel_date) }} to {{ cz_date(doc.cz_return_date) }}</div></td></tr>
+<tr><td><div class="lb">Pilgrim Count / Names</div><div class="bx">{{ names | length }} - {{ names | join(", ") }}</div></td>
+<td><div class="lb">Makkah Hotel / Nights</div><div class="bx">{{ cz_stay(doc, "makkah") }}</div></td>
+<td><div class="lb">Madinah Hotel / Nights</div><div class="bx">{{ cz_stay(doc, "madinah") }}</div></td></tr>
+{% if is_hajj %}
+<tr><td><div class="lb">Mina / Arafat Setup</div><div class="bx">{{ doc.cz_mina_arafat or "" }}</div></td>
+<td><div class="lb">Transport / Transfers</div><div class="bx">{{ doc.cz_transport_ziyarat or "" }}</div></td>
+<td><div class="lb">Meals / Group / Guide</div><div class="bx">{{ doc.cz_guide_meals or "" }}</div></td></tr>
+{% else %}
+<tr><td><div class="lb">Flight / Bus Details</div><div class="bx">{% if doc.cz_flight_bus_details %}{{ doc.cz_flight_bus_details }}{% else %}{% for s in doc.cz_flight_segments %}{{ s.transport_mode or "Flight" }} {{ s.flight_no or "" }} {{ s.sector_from or "" }}-{{ s.sector_to or "" }} {{ cz_date(s.travel_date) }}{% if not loop.last %}; {% endif %}{% endfor %}{% endif %}</div></td>
+<td><div class="lb">Transport / Ziyarat</div><div class="bx">{{ doc.cz_transport_ziyarat or "" }}</div></td>
+<td><div class="lb">Meal Plan / Sharing</div><div class="bx">{{ doc.cz_meal_plan or "" }}{% if doc.cz_room_sharing %} / {{ doc.cz_room_sharing }}{% endif %}</div></td></tr>
+{% endif %}
+{% if is_hajj %}
+<tr><td><div class="lb">Flight / Bus Details</div><div class="bx">{% if doc.cz_flight_bus_details %}{{ doc.cz_flight_bus_details }}{% else %}{% for s in doc.cz_flight_segments %}{{ s.transport_mode or "Flight" }} {{ s.flight_no or "" }} {{ s.sector_from or "" }}-{{ s.sector_to or "" }} {{ cz_date(s.travel_date) }}{% if not loop.last %}; {% endif %}{% endfor %}{% endif %}</div></td>
+<td><div class="lb">Room / Tent Sharing</div><div class="bx">{{ doc.cz_room_sharing or "" }}</div></td>
+<td><div class="lb">Hajj Visa / Permit Ref.</div><div class="bx">{{ doc.cz_visa_ref or "" }}</div></td></tr>
+{% endif %}
+</table>
+
+{{ m.sec("PILGRIM DETAILS") }}
+<table class="cz-tbl"><thead><tr><th>#</th><th>Pilgrim Name</th><th>Passport No.</th><th>Nationality</th><th>Date of Birth</th><th>Room</th></tr></thead><tbody>
+{% for p in doc.cz_travellers %}
+<tr><td>{{ loop.index }}</td><td>{{ p.traveller_name or "" }}</td><td>{{ p.passport_no or "" }}</td><td>{{ p.nationality or "" }}</td><td>{{ cz_date(p.date_of_birth) }}</td><td>{{ p.room_no or "" }}</td></tr>
+{% endfor %}
+{{ m.pad([3 - (doc.cz_travellers|length), 0]|max, 6) }}
+</tbody></table>
+
+{% if doc.cz_inclusions or doc.cz_exclusions %}
+{{ m.sec("INCLUSIONS / EXCLUSIONS") }}
+{{ m.kv([("Inclusions", doc.cz_inclusions), ("Exclusions", doc.cz_exclusions)]) }}
+{% endif %}
+
+<div class="cz-keep">{{ m.sec("PREPARED & POSTED DETAILS") }}
+{{ m.prepared(doc) }}</div>
+{{ m.frame_close(doc, "TERMS & CONDITIONS / AUTHORIZATION") }}

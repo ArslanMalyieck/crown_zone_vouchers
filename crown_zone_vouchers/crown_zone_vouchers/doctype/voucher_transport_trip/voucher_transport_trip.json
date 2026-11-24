@@ -1,0 +1,100 @@
+{
+ "actions": [],
+ "creation": "2026-10-29 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "vehicle_type",
+  "plate_no",
+  "pickup_datetime",
+  "pickup_location",
+  "dropoff_location",
+  "flight_no",
+  "passengers",
+  "driver_name",
+  "driver_contact",
+  "waiting_hours",
+  "driver_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "vehicle_type",
+   "fieldtype": "Data",
+   "label": "Vehicle Type",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "plate_no",
+   "fieldtype": "Data",
+   "label": "Plate No.",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "pickup_datetime",
+   "fieldtype": "Datetime",
+   "label": "Pickup Date / Time",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "pickup_location",
+   "fieldtype": "Data",
+   "label": "Pickup Location",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "dropoff_location",
+   "fieldtype": "Data",
+   "label": "Drop-off Location",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "flight_no",
+   "fieldtype": "Data",
+   "label": "Flight No. (if airport)"
+  },
+  {
+   "fieldname": "passengers",
+   "fieldtype": "Int",
+   "label": "No. of Passengers",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "label": "Driver"
+  },
+  {
+   "fieldname": "driver_contact",
+   "fieldtype": "Data",
+   "label": "Driver Contact"
+  },
+  {
+   "fieldname": "waiting_hours",
+   "fieldtype": "Float",
+   "label": "Waiting / Extra Hours"
+  },
+  {
+   "fieldname": "driver_notes",
+   "fieldtype": "Small Text",
+   "label": "Driver Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-29 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Crown Zone Vouchers",
+ "name": "Voucher Transport Trip",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1,
+ "permissions": []
+}
