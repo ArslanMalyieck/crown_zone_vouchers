@@ -10,6 +10,35 @@ const CZ_ITEM_ALL = ["cz_passenger", "cz_ticket_no", "cz_airline", "cz_sector", 
 const CZ_EXISTING_ITEM_FIELDS = ["custom_item_code", "final_price", "government_fee", "taxed_price", "vat",
 	"supplier", "supplier_name", "purchase_price", "purchase_tax_rate"];
 const CZ_TICKET_TAX = ["cz_tax_sp", "cz_tax_rg", "cz_tax_psf", "cz_tax_srb", "cz_tax_yq", "cz_tax_other"];
+const CZ_GRID_ALL = ["item_code", "description", "qty", "rate", "amount", "price_list_rate",
+	"final_price", "government_fee", "taxed_price", "vat", "supplier", "supplier_name",
+	"purchase_price", "purchase_tax_rate", "cz_tax_rate", "cz_taxes_total", "cz_passenger",
+	"cz_ticket_no", "cz_airline", "cz_sector", "cz_travel_date", "cz_flight_no", "cz_class",
+	"cz_hotel_city", "cz_room_type", "cz_lead_guest", "cz_rooms", "cz_nights", "cz_unit_rate", "cz_other_fees"];
+const CZ_GRID_LAYOUT = {
+	Ticketing: [["item_code", 1], ["cz_passenger", 1], ["cz_ticket_no", 1], ["cz_sector", 1],
+		["cz_travel_date", 1], ["final_price", 1], ["cz_tax_rate", 1], ["cz_taxes_total", 1],
+		["purchase_price", 1], ["supplier", 1]],
+	Airline: [["item_code", 1], ["cz_passenger", 1], ["cz_ticket_no", 1], ["cz_sector", 1],
+		["cz_travel_date", 1], ["final_price", 1], ["cz_tax_rate", 1], ["purchase_price", 1], ["supplier", 1]],
+	Hotel: [["item_code", 1], ["cz_hotel_city", 1], ["cz_room_type", 1], ["cz_rooms", 1],
+		["cz_nights", 1], ["final_price", 1], ["cz_tax_rate", 1], ["purchase_price", 1], ["supplier", 1]],
+	default: [["item_code", 1], ["description", 2], ["final_price", 1], ["government_fee", 1],
+		["cz_tax_rate", 1], ["purchase_price", 1], ["supplier", 1], ["vat", 1]],
+};
+
+function cz_apply_grid_layout(grid, service) {
+	const layout = CZ_GRID_LAYOUT[service] || CZ_GRID_LAYOUT.default;
+	const shown = new Set(layout.map((x) => x[0]));
+	CZ_GRID_ALL.forEach((fn) => {
+		cz_grid_prop(grid, fn, "in_list_view", shown.has(fn) ? 1 : 0);
+	});
+	layout.forEach(([fn, w]) => {
+		cz_grid_prop(grid, fn, "columns", w);
+		cz_grid_prop(grid, fn, "in_list_view", 1);
+		cz_grid_prop(grid, fn, "hidden", 0);
+	});
+}
 
 function cz_grid_prop(grid, fieldname, prop, value) {
 	try {
@@ -33,6 +62,7 @@ window.cz_item_columns = function (frm) {
 	CZ_TICKET_TAX.forEach((fn) => cz_grid_prop(grid, fn, "hidden", service === "Ticketing" ? 0 : 1));
 	cz_grid_prop(grid, "cz_taxes_total", "hidden", service === "Ticketing" ? 0 : 1);
 	cz_grid_prop(grid, "cz_tax_rate", "hidden", service ? 0 : 1);
+	if (service) cz_apply_grid_layout(grid, service);
 	grid.reset_grid();
 };
 
